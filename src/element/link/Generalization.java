@@ -1,10 +1,10 @@
-package canvas.link;
+package element.link;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 
-import canvas.Port;
+import element.Port;
 
 public class Generalization extends BasicLink {
 	public Generalization(Port startPort, Port endPort, int depth) {

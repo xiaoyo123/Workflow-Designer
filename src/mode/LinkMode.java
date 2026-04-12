@@ -2,10 +2,10 @@ package mode;
 
 import java.awt.event.MouseEvent;
 
-import canvas.Connectable;
-import canvas.Element;
-import canvas.Port;
-import canvas.link.BasicLink;
+import element.Connectable;
+import element.Element;
+import element.Port;
+import element.link.BasicLink;
 import window.Canvas;
 
 public class LinkMode implements Mode {

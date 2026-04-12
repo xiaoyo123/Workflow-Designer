@@ -6,7 +6,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
-import canvas.*;
+import element.*;
 import window.Canvas;
 
 public class SelectMode implements Mode {

@@ -1,4 +1,4 @@
-package canvas.object;
+package element.object;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import canvas.Element;
-import canvas.Groupable;
+import element.Element;
+import element.Groupable;
 
 public class Composite extends Element implements Groupable {
     private final List<Element> members = new ArrayList<>();

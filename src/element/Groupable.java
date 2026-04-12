@@ -1,4 +1,4 @@
-package canvas;
+package element;
 
 import java.util.List;
 

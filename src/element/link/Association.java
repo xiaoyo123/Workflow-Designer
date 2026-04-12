@@ -1,9 +1,9 @@
-package canvas.link;
+package element.link;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
-import canvas.Port;
+import element.Port;
 
 public class Association extends BasicLink {
 	public Association(Port startPort, Port endPort, int depth) {

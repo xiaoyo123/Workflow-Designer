@@ -1,8 +1,8 @@
 package window;
 import javax.swing.*;
 
-import canvas.Labelable;
-import canvas.Element;
+import element.Element;
+import element.Labelable;
 import mode.Mode;
 import mode.ShapeFactory;
 

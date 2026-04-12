@@ -1,6 +1,6 @@
 package mode;
 
-import canvas.Element;
+import element.Element;
 
 @FunctionalInterface
 public interface ShapeFactory {

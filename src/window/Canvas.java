@@ -2,11 +2,11 @@ package window;
 
 import javax.swing.*;
 
-import canvas.Connectable;
-import canvas.Element;
-import canvas.Groupable;
-import canvas.link.BasicLink;
-import canvas.object.Composite;
+import element.Connectable;
+import element.Element;
+import element.Groupable;
+import element.link.BasicLink;
+import element.object.Composite;
 import mode.Mode;
 
 import java.awt.*;

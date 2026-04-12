@@ -1,12 +1,12 @@
-package canvas.link;
+package element.link;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
-import canvas.Element;
-import canvas.Port;
+import element.Element;
+import element.Port;
 
 public abstract class BasicLink extends Element {
     private final Port startPort;

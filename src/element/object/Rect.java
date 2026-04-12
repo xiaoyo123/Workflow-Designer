@@ -1,4 +1,4 @@
-package canvas.object;
+package element.object;
 
 import java.awt.Graphics;
 import java.awt.Color;

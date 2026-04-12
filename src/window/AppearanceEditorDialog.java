@@ -10,7 +10,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import canvas.Labelable;
+import element.Labelable;
 
 public final class AppearanceEditorDialog {
     private AppearanceEditorDialog() {

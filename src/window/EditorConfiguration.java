@@ -3,15 +3,15 @@ package window;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import element.link.Association;
+import element.link.Composition;
+import element.link.Generalization;
+import element.object.Oval;
+import element.object.Rect;
 import mode.LinkMode;
 import mode.Mode;
 import mode.SelectMode;
 import mode.ShapeFactory;
-import canvas.link.Association;
-import canvas.link.Composition;
-import canvas.link.Generalization;
-import canvas.object.Oval;
-import canvas.object.Rect;
 
 public final class EditorConfiguration {
     private EditorConfiguration() {

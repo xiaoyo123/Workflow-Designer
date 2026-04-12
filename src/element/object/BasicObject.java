@@ -1,13 +1,13 @@
-package canvas.object;
+package element.object;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import canvas.Labelable;
-import canvas.Connectable;
-import canvas.Element;
-import canvas.Port;
-import canvas.Resizable;
+import element.Connectable;
+import element.Element;
+import element.Labelable;
+import element.Port;
+import element.Resizable;
 
 public abstract class BasicObject extends Element implements Connectable, Labelable, Resizable {
     protected String labelName = "";

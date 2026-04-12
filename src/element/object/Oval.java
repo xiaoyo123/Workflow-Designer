@@ -1,8 +1,8 @@
-package canvas.object;
+package element.object;
 
 import java.awt.Graphics;
 
-import canvas.Port;
+import element.Port;
 
 import java.awt.Color;
 
