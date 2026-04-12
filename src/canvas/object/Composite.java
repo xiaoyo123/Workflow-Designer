@@ -64,7 +64,7 @@ public class Composite extends Element implements Groupable {
                .sorted(Comparator.comparingInt(Element::getDepth).reversed())
              .forEach(element -> element.draw(g));
 
-        if (isSelected) {
+        if (isSelected || isHovered) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setColor(Color.BLACK);
             float[] dash = {6f, 4f};

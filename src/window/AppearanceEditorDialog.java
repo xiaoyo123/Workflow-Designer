@@ -10,13 +10,13 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import canvas.AppearanceEditable;
+import canvas.Labelable;
 
 public final class AppearanceEditorDialog {
     private AppearanceEditorDialog() {
     }
 
-    public static boolean show(Component parent, AppearanceEditable editable) {
+    public static boolean show(Component parent, Labelable editable) {
         JTextField labelField = new JTextField(editable.getLabelName(), 16);
         ColorOption[] options = new ColorOption[] {
             new ColorOption("Light Gray", new Color(240, 240, 240)),

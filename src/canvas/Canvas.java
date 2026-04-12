@@ -19,6 +19,7 @@ public class Canvas extends JPanel {
     private final List<Element> selectedElements = new ArrayList<>();
     private Rectangle marquee = null;
     private BasicLink previewLink = null;
+    private Element hoveredElement = null;
 
     public Canvas() {
         setBackground(Color.WHITE);
@@ -143,6 +144,29 @@ public class Canvas extends JPanel {
         repaint();
     }
 
+    private void updateHoverState(int x, int y) {
+        Element nextHovered = findElementAt(x, y);
+        if (hoveredElement == nextHovered) {
+            return;
+        }
+
+        if (hoveredElement != null) {
+            hoveredElement.setHovered(false);
+        }
+
+        hoveredElement = nextHovered;
+        if (hoveredElement != null) {
+            hoveredElement.setHovered(true);
+        }
+    }
+
+    private void clearHoverState() {
+        if (hoveredElement != null) {
+            hoveredElement.setHovered(false);
+            hoveredElement = null;
+        }
+    }
+
     public void selectByRectangle(Rectangle rect, boolean append) {
         if (!append) {
             unselectAll();
@@ -232,6 +256,16 @@ public class Canvas extends JPanel {
                     currentMode.mouseDragged(e);
                     repaint();
                 }
+            }
+
+            @Override public void mouseMoved(MouseEvent e) {
+                updateHoverState(e.getX(), e.getY());
+                repaint();
+            }
+
+            @Override public void mouseExited(MouseEvent e) {
+                clearHoverState();
+                repaint();
             }
         };
         addMouseListener(adapter);

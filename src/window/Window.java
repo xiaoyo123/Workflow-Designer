@@ -1,7 +1,7 @@
 package window;
 import javax.swing.*;
 
-import canvas.AppearanceEditable;
+import canvas.Labelable;
 import canvas.Canvas;
 import canvas.Element;
 import canvas.Groupable;
@@ -239,7 +239,7 @@ public class Window extends JFrame {
             JOptionPane.showMessageDialog(this, "Cannot assign label to a group. Please select a single basic object.", "Label", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        if (!(selectedElement instanceof AppearanceEditable editable)) {
+        if (!(selectedElement instanceof Labelable editable)) {
             JOptionPane.showMessageDialog(this, "Only a basic object can be assigned label.", "Label", JOptionPane.INFORMATION_MESSAGE);
             return;
         }

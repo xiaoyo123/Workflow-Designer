@@ -3,12 +3,13 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import canvas.AppearanceEditable;
+import canvas.Labelable;
 import canvas.Connectable;
 import canvas.Element;
 import canvas.Port;
+import canvas.Resizable;
 
-public abstract class BasicObject extends Element implements Connectable, AppearanceEditable {
+public abstract class BasicObject extends Element implements Connectable, Labelable, Resizable {
     protected String labelName = "";
     protected Color fillColor = new Color(240, 240, 240);
     protected final List<Port> ports = new ArrayList<>();
@@ -62,7 +63,7 @@ public abstract class BasicObject extends Element implements Connectable, Appear
     }
 
     protected void drawPorts(Graphics g) {
-        if (!isSelected()) return;
+        if (!isSelected() && !isHovered()) return;
 
         g.setColor(Color.BLACK);
         for (Port port : ports) {
@@ -102,11 +103,6 @@ public abstract class BasicObject extends Element implements Connectable, Appear
     public void move(int dx, int dy) {
         super.move(dx, dy);
         refreshPorts();
-    }
-
-    @Override
-    public boolean canResize() {
-        return true;
     }
 
     @Override

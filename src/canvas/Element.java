@@ -7,6 +7,7 @@ public abstract class Element {
     protected int x1, x2, y1, y2;
     protected int depth;
     protected boolean isSelected = false;
+    protected boolean isHovered = false;
 
     public Element(int x1, int y1, int x2, int y2, int depth){
         this.x1 = x1;
@@ -29,6 +30,14 @@ public abstract class Element {
     public boolean isSelected() {
         return isSelected;
     }
+
+    public void setHovered(boolean hovered) {
+        this.isHovered = hovered;
+    }
+
+    public boolean isHovered() {
+        return isHovered;
+    }
     
     public void move(int dx, int dy) {
         this.x1 += dx;
@@ -36,12 +45,6 @@ public abstract class Element {
         this.x2 += dx;
         this.y2 += dy;
     }
-
-    public boolean canResize() {
-        return false;
-    }
-
-    public void setBounds(int x1, int y1, int x2, int y2) {}
 
     public boolean isSelectable() {
         return false;

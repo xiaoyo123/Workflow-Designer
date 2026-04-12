@@ -2,7 +2,7 @@ package canvas;
 
 import java.awt.Color;
 
-public interface AppearanceEditable {
+public interface Labelable {
     String getLabelName();
     void setLabelName(String labelName);
     Color getFillColor();

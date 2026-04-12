@@ -2,7 +2,6 @@ package canvas.link;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
@@ -20,11 +19,7 @@ public class Composition extends BasicLink {
 		Port start = getStartPort();
 		Port end = getEndPort();
 
-		double angle = Math.atan2(end.getY() - start.getY(), end.getX() - start.getX());
-		int arrowDepth = 20;
-		int adjustedEndX = (int) (end.getX() - arrowDepth * Math.cos(angle));
-		int adjustedEndY = (int) (end.getY() - arrowDepth * Math.sin(angle));
-		g2.drawLine(start.getX(), start.getY(), adjustedEndX, adjustedEndY);
+		g2.drawLine(start.getX(), start.getY(), end.getX(), end.getY());
 
 		double arrowAngle = Math.atan2(end.getY() - start.getY(), end.getX() - start.getX());
 		AffineTransform tx = g2.getTransform();

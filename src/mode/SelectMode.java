@@ -18,7 +18,11 @@ public class SelectMode implements Mode {
     private boolean isBoxSelecting = false;
     private boolean isResizing = false;
     private Element resizingElement = null;
-    private int resizeHandle = -1;
+    private Resizable resizingTarget = null;
+    private boolean resizeLeftEdge = false;
+    private boolean resizeRightEdge = false;
+    private boolean resizeTopEdge = false;
+    private boolean resizeBottomEdge = false;
     private int resizeRefLeft;
     private int resizeRefTop;
     private int resizeRefRight;
@@ -35,22 +39,26 @@ public class SelectMode implements Mode {
         isBoxSelecting = false;
         isResizing = false;
         resizingElement = null;
-        resizeHandle = -1;
+        resizingTarget = null;
         clearResizeReference();
         Element hitElement = canvas.findElementAt(e.getX(), e.getY());
 
         if (hitElement != null
-            && hitElement.canResize()
+            && hitElement instanceof Resizable
             && hitElement.isSelected()
             && selectedElements.size() == 1) {
             if (hitElement instanceof Connectable connectable) {
                 Port port = connectable.getPortAt(e.getX(), e.getY());
-                int handle = port != null ? connectable.getPortIndex(port) : -1;
-                if (handle != -1) {
+                if (port != null) {
+                    captureResizeReference(hitElement);
+                    captureResizeEdges(port);
+                    if (!hasResizeEdge()) {
+                        clearResizeReference();
+                        return;
+                    }
                     isResizing = true;
                     resizingElement = hitElement;
-                    resizeHandle = handle;
-                    captureResizeReference(resizingElement);
+                    resizingTarget = (Resizable) hitElement;
                     anchorElement = hitElement;
                     return;
                 }
@@ -98,8 +106,8 @@ public class SelectMode implements Mode {
             return;
         }
 
-        if (isResizing && resizingElement != null) {
-            resizeObjectFromHandle(resizingElement, resizeHandle, e.getX(), e.getY());
+        if (isResizing && resizingElement != null && resizingTarget != null) {
+            resizeObjectFromPort(resizingTarget, e.getX(), e.getY());
             lastPoint = e.getPoint();
             return;
         }
@@ -135,7 +143,7 @@ public class SelectMode implements Mode {
         if (isResizing) {
             isResizing = false;
             resizingElement = null;
-            resizeHandle = -1;
+            resizingTarget = null;
             clearResizeReference();
             canvas.clearMarquee();
             return;
@@ -147,63 +155,23 @@ public class SelectMode implements Mode {
         canvas.clearMarquee();
     }
 
-    private void resizeObjectFromHandle(Element object, int handle, int mouseX, int mouseY) {
-        int x1;
-        int y1;
-        int x2;
-        int y2;
+    private void resizeObjectFromPort(Resizable object, int mouseX, int mouseY) {
+        int x1 = resizeRefLeft;
+        int y1 = resizeRefTop;
+        int x2 = resizeRefRight;
+        int y2 = resizeRefBottom;
 
-        switch (handle) {
-            case 0: // top-left
-                x1 = mouseX;
-                y1 = mouseY;
-                x2 = resizeRefRight;
-                y2 = resizeRefBottom;
-                break;
-            case 1: // top-center
-                x1 = resizeRefLeft;
-                y1 = mouseY;
-                x2 = resizeRefRight;
-                y2 = resizeRefBottom;
-                break;
-            case 2: // top-right
-                x1 = resizeRefLeft;
-                y1 = mouseY;
-                x2 = mouseX;
-                y2 = resizeRefBottom;
-                break;
-            case 3: // right-center
-                x1 = resizeRefLeft;
-                y1 = resizeRefTop;
-                x2 = mouseX;
-                y2 = resizeRefBottom;
-                break;
-            case 4: // bottom-right
-                x1 = resizeRefLeft;
-                y1 = resizeRefTop;
-                x2 = mouseX;
-                y2 = mouseY;
-                break;
-            case 5: // bottom-center
-                x1 = resizeRefLeft;
-                y1 = resizeRefTop;
-                x2 = resizeRefRight;
-                y2 = mouseY;
-                break;
-            case 6: // bottom-left
-                x1 = mouseX;
-                y1 = resizeRefTop;
-                x2 = resizeRefRight;
-                y2 = mouseY;
-                break;
-            case 7: // left-center
-                x1 = mouseX;
-                y1 = resizeRefTop;
-                x2 = resizeRefRight;
-                y2 = resizeRefBottom;
-                break;
-            default:
-                return;
+        if (resizeLeftEdge) {
+            x1 = mouseX;
+        }
+        if (resizeRightEdge) {
+            x2 = mouseX;
+        }
+        if (resizeTopEdge) {
+            y1 = mouseY;
+        }
+        if (resizeBottomEdge) {
+            y2 = mouseY;
         }
 
         int dx = x2 - x1;
@@ -211,23 +179,35 @@ public class SelectMode implements Mode {
 
         if (Math.abs(dx) < MIN_RESIZE_SIZE) {
             int signX = dx >= 0 ? 1 : -1;
-            if (handle == 0 || handle == 6 || handle == 7) {
+            if (resizeLeftEdge && !resizeRightEdge) {
                 x1 = x2 - signX * MIN_RESIZE_SIZE;
-            } else if (handle == 2 || handle == 3 || handle == 4) {
+            } else if (resizeRightEdge && !resizeLeftEdge) {
                 x2 = x1 + signX * MIN_RESIZE_SIZE;
             }
         }
 
         if (Math.abs(dy) < MIN_RESIZE_SIZE) {
             int signY = dy >= 0 ? 1 : -1;
-            if (handle == 0 || handle == 1 || handle == 2) {
+            if (resizeTopEdge && !resizeBottomEdge) {
                 y1 = y2 - signY * MIN_RESIZE_SIZE;
-            } else if (handle == 4 || handle == 5 || handle == 6) {
+            } else if (resizeBottomEdge && !resizeTopEdge) {
                 y2 = y1 + signY * MIN_RESIZE_SIZE;
             }
         }
 
         object.setBounds(x1, y1, x2, y2);
+    }
+
+    private void captureResizeEdges(Port port) {
+        final int tolerance = 10;
+        resizeLeftEdge = Math.abs(port.getX() - resizeRefLeft) <= tolerance;
+        resizeRightEdge = Math.abs(port.getX() - resizeRefRight) <= tolerance;
+        resizeTopEdge = Math.abs(port.getY() - resizeRefTop) <= tolerance;
+        resizeBottomEdge = Math.abs(port.getY() - resizeRefBottom) <= tolerance;
+    }
+
+    private boolean hasResizeEdge() {
+        return resizeLeftEdge || resizeRightEdge || resizeTopEdge || resizeBottomEdge;
     }
 
     private void captureResizeReference(Element object) {
@@ -242,5 +222,9 @@ public class SelectMode implements Mode {
         resizeRefTop = 0;
         resizeRefRight = 0;
         resizeRefBottom = 0;
+        resizeLeftEdge = false;
+        resizeRightEdge = false;
+        resizeTopEdge = false;
+        resizeBottomEdge = false;
     }
 }
