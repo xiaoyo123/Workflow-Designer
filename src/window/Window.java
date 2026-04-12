@@ -1,18 +1,12 @@
 package window;
 import javax.swing.*;
 
+import canvas.AppearanceEditable;
 import canvas.Canvas;
 import canvas.Element;
-import canvas.link.Association;
-import canvas.link.Composition;
-import canvas.link.Generalization;
-import canvas.object.Composite;
-import canvas.object.BasicObject;
-import canvas.object.Oval;
-import canvas.object.Rect;
-import mode.LinkMode;
+import canvas.Groupable;
 import mode.Mode;
-import mode.SelectMode;
+import mode.ShapeFactory;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -26,6 +20,7 @@ public class Window extends JFrame {
     protected final Canvas canvas;
     private JPanel sideBar;
     private final Map<String, Mode> modes = new LinkedHashMap<>();
+    private final Map<String, ShapeFactory> shapeFactories = new LinkedHashMap<>();
     private final Map<String, JButton> toolButtons = new LinkedHashMap<>();
     private String activeModeName = "Select";
     private String previousModeName = "Select";
@@ -63,10 +58,8 @@ public class Window extends JFrame {
 
         String[] btnNames = {"Select", "Association", "Generalization", "Composition", "Rect", "Oval"};
 
-        modes.put("Select", new SelectMode(canvas));
-        modes.put("Association", new LinkMode(canvas, Association::new));
-        modes.put("Generalization", new LinkMode(canvas, Generalization::new));
-        modes.put("Composition", new LinkMode(canvas, Composition::new));
+        modes.putAll(EditorConfiguration.createModes(canvas));
+        shapeFactories.putAll(EditorConfiguration.createShapeFactories());
         
         for (String name : btnNames) {
             JButton btn = new JButton(name, loadIcon(name));
@@ -79,7 +72,7 @@ public class Window extends JFrame {
             btn.setMargin(new Insets(4, 4, 4, 4));
             btn.setPreferredSize(new Dimension(88, 62));
 
-            if ("Rect".equals(name) || "Oval".equals(name)) {
+            if (shapeFactories.containsKey(name)) {
                 String shapeType = name;
                 btn.addMouseListener(new MouseAdapter() {
                     @Override
@@ -188,9 +181,12 @@ public class Window extends JFrame {
         }
 
         int depth = canvas.getFrontDepth() - 1;
-        Element newShape = "Oval".equals(shapeType)
-            ? new Oval(canvasPoint.x, canvasPoint.y, depth)
-            : new Rect(canvasPoint.x, canvasPoint.y, depth);
+        ShapeFactory shapeFactory = shapeFactories.get(shapeType);
+        if (shapeFactory == null) {
+            return;
+        }
+
+        Element newShape = shapeFactory.createAt(canvasPoint.x, canvasPoint.y, depth);
 
         canvas.addElement(newShape);
     }
@@ -239,66 +235,17 @@ public class Window extends JFrame {
         }
 
         Element selectedElement = selected.get(0);
-        List<Element> members = selectedElement.getGroupMembers();
-        if (members != null) {
+        if (selectedElement instanceof Groupable) {
             JOptionPane.showMessageDialog(this, "Cannot assign label to a group. Please select a single basic object.", "Label", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        BasicObject object = BasicObject.class.cast(selectedElement);
-
-        JTextField labelField = new JTextField(object.getLabelName(), 16);
-        ColorOption[] options = new ColorOption[] {
-            new ColorOption("Light Gray", new Color(240, 240, 240)),
-            new ColorOption("White", Color.WHITE),
-            new ColorOption("Red", new Color(255, 182, 182)),
-            new ColorOption("Orange", new Color(255, 214, 153)),
-            new ColorOption("Yellow", new Color(255, 245, 157)),
-            new ColorOption("Green", new Color(179, 229, 180)),
-            new ColorOption("Blue", new Color(187, 222, 251)),
-            new ColorOption("Purple", new Color(225, 190, 231))
-        };
-
-        JComboBox<ColorOption> colorBox = new JComboBox<>(options);
-        int initialIndex = 0;
-        for (int i = 0; i < options.length; i++) {
-            if (options[i].color.equals(object.getFillColor())) {
-                initialIndex = i;
-                break;
-            }
-        }
-        colorBox.setSelectedIndex(initialIndex);
-
-        JPanel panel = new JPanel(new GridLayout(2, 2, 8, 8));
-        panel.add(new JLabel("Label:"));
-        panel.add(labelField);
-        panel.add(new JLabel("Color:"));
-        panel.add(colorBox);
-
-        int result = JOptionPane.showConfirmDialog(this, panel, "Label", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (result != JOptionPane.OK_OPTION) {
+        if (!(selectedElement instanceof AppearanceEditable editable)) {
+            JOptionPane.showMessageDialog(this, "Only a basic object can be assigned label.", "Label", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
-        object.setLabelName(labelField.getText());
-        ColorOption selectedColorOption = (ColorOption) colorBox.getSelectedItem();
-        if (selectedColorOption != null) {
-            object.setFillColor(selectedColorOption.color);
-        }
-        canvas.repaint();
-    }
-
-    private static class ColorOption {
-        private final String name;
-        private final Color color;
-
-        private ColorOption(String name, Color color) {
-            this.name = name;
-            this.color = color;
-        }
-
-        @Override
-        public String toString() {
-            return name;
+        if (AppearanceEditorDialog.show(this, editable)) {
+            canvas.repaint();
         }
     }
 }

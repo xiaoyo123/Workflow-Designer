@@ -1,0 +1,7 @@
+package canvas;
+
+import java.util.List;
+
+public interface Groupable {
+    List<Element> getGroupMembers();
+}

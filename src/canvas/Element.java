@@ -2,7 +2,6 @@ package canvas;
 
 import java.awt.*;
 import java.util.Set;
-import java.util.List;
 
 public abstract class Element {
     protected int x1, x2, y1, y2;
@@ -44,24 +43,12 @@ public abstract class Element {
 
     public void setBounds(int x1, int y1, int x2, int y2) {}
 
-    public Port getPortAt(int x, int y) {
-        return null;
-    }
-
-    public int getPortIndex(Port port) {
-        return -1;
-    }
-
     public boolean isSelectable() {
         return false;
     }
 
     public void collectMovedElements(Set<Element> out) {
         out.add(this);
-    }
-    
-    public List<Element> getGroupMembers() {
-        return null;
     }
 
     public int getLeft() { return Math.min(x1, x2); }

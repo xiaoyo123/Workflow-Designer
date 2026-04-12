@@ -43,9 +43,9 @@ public class SelectMode implements Mode {
             && hitElement.canResize()
             && hitElement.isSelected()
             && selectedElements.size() == 1) {
-            Port port = hitElement.getPortAt(e.getX(), e.getY());
-            if (port != null) {
-                int handle = hitElement.getPortIndex(port);
+            if (hitElement instanceof Connectable connectable) {
+                Port port = connectable.getPortAt(e.getX(), e.getY());
+                int handle = port != null ? connectable.getPortIndex(port) : -1;
                 if (handle != -1) {
                     isResizing = true;
                     resizingElement = hitElement;

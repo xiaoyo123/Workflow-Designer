@@ -186,8 +186,11 @@ public class Canvas extends JPanel {
         }
 
         Element selected = selectedElements.get(0);
-        List<Element> members = selected.getGroupMembers();
-        if (members == null) {
+        if (!(selected instanceof Groupable groupable)) {
+            return;
+        }
+        List<Element> members = groupable.getGroupMembers();
+        if (members.isEmpty()) {
             return;
         }
         elements.remove(selected);
@@ -201,7 +204,7 @@ public class Canvas extends JPanel {
         ordered.sort(Comparator.comparingInt(Element::getDepth));
 
         for (Element element : ordered) {
-            if (element.getPortAt(x, y) != null) {
+            if (element instanceof Connectable connectable && connectable.getPortAt(x, y) != null) {
                 return element;
             }
         }

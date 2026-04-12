@@ -3,10 +3,12 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import canvas.AppearanceEditable;
+import canvas.Connectable;
 import canvas.Element;
 import canvas.Port;
 
-public abstract class BasicObject extends Element {
+public abstract class BasicObject extends Element implements Connectable, AppearanceEditable {
     protected String labelName = "";
     protected Color fillColor = new Color(240, 240, 240);
     protected final List<Port> ports = new ArrayList<>();

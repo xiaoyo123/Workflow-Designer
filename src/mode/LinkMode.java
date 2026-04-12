@@ -4,6 +4,7 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 
 import canvas.Canvas;
+import canvas.Connectable;
 import canvas.Element;
 import canvas.Port;
 import canvas.link.BasicLink;
@@ -80,6 +81,9 @@ public class LinkMode implements Mode {
     }
 
     private Port getPort(Element element, int x, int y) {
-        return element != null ? element.getPortAt(x, y) : null;
+        if (!(element instanceof Connectable connectable)) {
+            return null;
+        }
+        return connectable.getPortAt(x, y);
     }
 }

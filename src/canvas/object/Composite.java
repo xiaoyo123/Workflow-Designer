@@ -9,8 +9,9 @@ import java.util.Comparator;
 import java.util.List;
 
 import canvas.Element;
+import canvas.Groupable;
 
-public class Composite extends Element {
+public class Composite extends Element implements Groupable {
     private final List<Element> members = new ArrayList<>();
 
     public Composite(List<Element> elements, int depth) {
