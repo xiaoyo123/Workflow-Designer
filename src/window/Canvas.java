@@ -1,7 +1,10 @@
-package canvas;
+package window;
 
 import javax.swing.*;
 
+import canvas.Connectable;
+import canvas.Element;
+import canvas.Groupable;
 import canvas.link.BasicLink;
 import canvas.object.Composite;
 import mode.Mode;

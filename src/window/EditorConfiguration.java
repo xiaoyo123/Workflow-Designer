@@ -3,7 +3,6 @@ package window;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import canvas.Canvas;
 import mode.LinkMode;
 import mode.Mode;
 import mode.SelectMode;

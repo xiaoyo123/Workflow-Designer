@@ -2,11 +2,11 @@ package mode;
 
 import java.awt.event.MouseEvent;
 
-import canvas.Canvas;
 import canvas.Connectable;
 import canvas.Element;
 import canvas.Port;
 import canvas.link.BasicLink;
+import window.Canvas;
 
 public class LinkMode implements Mode {
     @FunctionalInterface

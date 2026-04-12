@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import canvas.*;
+import window.Canvas;
 
 public class SelectMode implements Mode {
     private static final int MIN_RESIZE_SIZE = 40;

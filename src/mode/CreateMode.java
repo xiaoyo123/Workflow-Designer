@@ -3,6 +3,7 @@ package mode;
 import java.awt.event.MouseEvent;
 
 import canvas.*;
+import window.Canvas;
 
 import java.awt.Point;
 
