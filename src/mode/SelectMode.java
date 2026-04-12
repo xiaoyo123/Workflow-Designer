@@ -7,18 +7,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import canvas.*;
-import window.*;
 
 public class SelectMode implements Mode {
     private static final int MIN_RESIZE_SIZE = 40;
-    private Canvas canvas;
-    private final List<CanvasElement> selectedShapes = new ArrayList<>();
-    private CanvasElement anchorShape = null;
+    private final Canvas canvas;
+    private final List<Element> selectedElements = new ArrayList<>();
+    private Element anchorElement = null;
     private Point lastPoint;
     private Point dragStart;
     private boolean isBoxSelecting = false;
     private boolean isResizing = false;
-    private CanvasElement resizingObject = null;
+    private Element resizingElement = null;
     private int resizeHandle = -1;
     private int resizeRefLeft;
     private int resizeRefTop;
@@ -35,32 +34,35 @@ public class SelectMode implements Mode {
         dragStart = e.getPoint();
         isBoxSelecting = false;
         isResizing = false;
-        resizingObject = null;
+        resizingElement = null;
         resizeHandle = -1;
         clearResizeReference();
-        CanvasElement hitShape = canvas.findShapeAt(e.getX(), e.getY());
+        Element hitElement = canvas.findElementAt(e.getX(), e.getY());
 
-        if (hitShape != null
-            && hitShape.canResize()
-            && hitShape.isSelected()
-            && selectedShapes.size() == 1) {
-            int handle = hitShape.getHandleAt(e.getPoint());
-            if (handle != -1) {
-                isResizing = true;
-                resizingObject = hitShape;
-                resizeHandle = handle;
-                captureResizeReference(resizingObject);
-                anchorShape = hitShape;
-                return;
+        if (hitElement != null
+            && hitElement.canResize()
+            && hitElement.isSelected()
+            && selectedElements.size() == 1) {
+            Port port = hitElement.getPortAt(e.getX(), e.getY());
+            if (port != null) {
+                int handle = hitElement.getPortIndex(port);
+                if (handle != -1) {
+                    isResizing = true;
+                    resizingElement = hitElement;
+                    resizeHandle = handle;
+                    captureResizeReference(resizingElement);
+                    anchorElement = hitElement;
+                    return;
+                }
             }
         }
 
         if (e.isControlDown() || e.isShiftDown()) {
-            if (hitShape != null) {
-                canvas.toggleSelection(hitShape);
-                selectedShapes.clear();
-                selectedShapes.addAll(canvas.getSelectedShapes());
-                anchorShape = hitShape;
+            if (hitElement != null) {
+                canvas.toggleSelection(hitElement);
+                selectedElements.clear();
+                selectedElements.addAll(canvas.getSelectedElements());
+                anchorElement = hitElement;
             } else {
                 isBoxSelecting = true;
                 canvas.setMarquee(new Rectangle(dragStart.x, dragStart.y, 0, 0));
@@ -68,21 +70,21 @@ public class SelectMode implements Mode {
             return;
         }
 
-        if (hitShape == null) {
+        if (hitElement == null) {
             canvas.unselectAll();
-            selectedShapes.clear();
-            anchorShape = null;
+            selectedElements.clear();
+            anchorElement = null;
             isBoxSelecting = true;
             canvas.setMarquee(new Rectangle(dragStart.x, dragStart.y, 0, 0));
             return;
         }
 
-        canvas.selectOnly(hitShape);
-        selectedShapes.clear();
-        selectedShapes.add(hitShape);
-        anchorShape = hitShape;
+        canvas.selectOnly(hitElement);
+        selectedElements.clear();
+        selectedElements.add(hitElement);
+        anchorElement = hitElement;
 
-        hitShape.setSelected(true);
+        hitElement.setSelected(true);
     }
 
     @Override
@@ -96,20 +98,20 @@ public class SelectMode implements Mode {
             return;
         }
 
-        if (isResizing && resizingObject != null) {
-            resizeObjectFromHandle(resizingObject, resizeHandle, e.getX(), e.getY());
+        if (isResizing && resizingElement != null) {
+            resizeObjectFromHandle(resizingElement, resizeHandle, e.getX(), e.getY());
             lastPoint = e.getPoint();
             return;
         }
 
-        if (selectedShapes.isEmpty()) {
+        if (selectedElements.isEmpty()) {
             return;
         }
 
         int dx = e.getX() - lastPoint.x;
         int dy = e.getY() - lastPoint.y;
-        for (CanvasElement shape : selectedShapes) {
-            shape.move(dx, dy);
+        for (Element element : selectedElements) {
+            element.move(dx, dy);
         }
         lastPoint = e.getPoint();
     }
@@ -123,8 +125,8 @@ public class SelectMode implements Mode {
             int height = Math.abs(e.getY() - dragStart.y);
             boolean append = e.isControlDown() || e.isShiftDown();
             canvas.selectByRectangle(new Rectangle(x, y, width, height), append);
-            selectedShapes.clear();
-            selectedShapes.addAll(canvas.getSelectedShapes());
+            selectedElements.clear();
+            selectedElements.addAll(canvas.getSelectedElements());
             canvas.clearMarquee();
             isBoxSelecting = false;
             return;
@@ -132,20 +134,20 @@ public class SelectMode implements Mode {
 
         if (isResizing) {
             isResizing = false;
-            resizingObject = null;
+            resizingElement = null;
             resizeHandle = -1;
             clearResizeReference();
             canvas.clearMarquee();
             return;
         }
 
-        if (anchorShape != null) {
-            canvas.bringToFront(anchorShape);
+        if (anchorElement != null) {
+            canvas.bringToFront(anchorElement);
         }
         canvas.clearMarquee();
     }
 
-    private void resizeObjectFromHandle(CanvasElement object, int handle, int mouseX, int mouseY) {
+    private void resizeObjectFromHandle(Element object, int handle, int mouseX, int mouseY) {
         int x1;
         int y1;
         int x2;
@@ -228,7 +230,7 @@ public class SelectMode implements Mode {
         object.setBounds(x1, y1, x2, y2);
     }
 
-    private void captureResizeReference(CanvasElement object) {
+    private void captureResizeReference(Element object) {
         resizeRefLeft = object.getLeft();
         resizeRefTop = object.getTop();
         resizeRefRight = object.getRight();

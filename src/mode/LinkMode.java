@@ -4,20 +4,20 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 
 import canvas.Canvas;
-import canvas.CanvasElement;
+import canvas.Element;
+import canvas.Port;
 import canvas.link.BasicLink;
 
 public class LinkMode implements Mode {
     @FunctionalInterface
     public interface LinkCreator {
-        BasicLink create(CanvasElement start, Point startPoint, CanvasElement end, Point endPoint, int depth);
+        BasicLink create(Port startPort, Port endPort, int depth);
     }
 
     private final Canvas canvas;
     private final LinkCreator linkCreator;
-    private CanvasElement startObject;
-    private Point startPort;
-    private int startPortIndex = -1;
+    private Element startElement;
+    private Port startPort;
     private BasicLink previewLink;
 
     public LinkMode(Canvas canvas, LinkCreator linkCreator) {
@@ -27,12 +27,11 @@ public class LinkMode implements Mode {
 
     @Override
     public void mousePressed(MouseEvent e) {
-        startObject = canvas.findPortOwnerAt(e.getX(), e.getY());
-        startPort = startObject != null ? startObject.getPortAt(e.getX(), e.getY()) : null;
-        startPortIndex = startObject != null ? startObject.getPortIndexAt(e.getX(), e.getY()) : -1;
+        startElement = canvas.findPortOwnerAt(e.getX(), e.getY());
+        startPort = getPort(startElement, e.getX(), e.getY());
         
         if (startPort != null) {
-            previewLink = linkCreator.create(startObject, startPort, null, new Point(e.getX(), e.getY()), 0);
+            previewLink = linkCreator.create(startPort, new Port(e.getX(), e.getY()), 0);
             canvas.setPreviewLink(previewLink);
         }
     }
@@ -40,7 +39,7 @@ public class LinkMode implements Mode {
     @Override
     public void mouseDragged(MouseEvent e) {
         if (startPort != null) {
-            previewLink = linkCreator.create(startObject, startPort, null, new Point(e.getX(), e.getY()), 0);
+            previewLink = linkCreator.create(startPort, new Port(e.getX(), e.getY()), 0);
             canvas.setPreviewLink(previewLink);
         }
     }
@@ -50,36 +49,37 @@ public class LinkMode implements Mode {
         canvas.clearPreviewLink();
         previewLink = null;
         
-        if (startObject == null || startPort == null) {
+        if (startElement == null || startPort == null) {
             return;
         }
 
-        CanvasElement endObject = canvas.findPortOwnerAt(e.getX(), e.getY());
-        Point endPort = endObject != null ? endObject.getPortAt(e.getX(), e.getY()) : null;
-        if (endObject == null || endPort == null) {
+        Element endElement = canvas.findPortOwnerAt(e.getX(), e.getY());
+        Port endPort = getPort(endElement, e.getX(), e.getY());
+        if (endElement == null || endPort == null) {
             return;
         }
 
         // Prevent self-linking
-        if (startObject == endObject) {
-            startObject = null;
+        if (startElement == endElement) {
+            startElement = null;
             startPort = null;
             return;
         }
 
         int depth = canvas.getBackDepth() + 1;
-        int endPortIndex = endObject.getPortIndexAt(e.getX(), e.getY());
-        BasicLink link = linkCreator.create(startObject, startPort, endObject, endPort, depth);
+        BasicLink link = linkCreator.create(startPort, endPort, depth);
         if (link == null) {
-            startObject = null;
+            startElement = null;
             startPort = null;
             return;
         }
-        link.setPortBinding(startPortIndex, endPortIndex);
-        canvas.addShape(link);
+        canvas.addElement(link);
         
-        startObject = null;
+        startElement = null;
         startPort = null;
-        startPortIndex = -1;
+    }
+
+    private Port getPort(Element element, int x, int y) {
+        return element != null ? element.getPortAt(x, y) : null;
     }
 }

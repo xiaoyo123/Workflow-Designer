@@ -4,36 +4,26 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Point;
-import java.util.List;
 
-import canvas.CanvasElement;
+import canvas.Element;
+import canvas.Port;
 
-public abstract class BasicLink extends CanvasElement {
-    private final CanvasElement startShape;
-    private final CanvasElement endShape;
-    private ConnectPoint startConnectPoint;
-    private ConnectPoint endConnectPoint;
-    private int startPortIndex = -1;
-    private int endPortIndex = -1;
+public abstract class BasicLink extends Element {
+    private final Port startPort;
+    private final Port endPort;
 
-    public BasicLink(CanvasElement startShape, Point startPoint, CanvasElement endShape, Point endPoint, int depth) {
-        super(startPoint.x, startPoint.y, endPoint.x, endPoint.y, depth);
-        this.startShape = startShape;
-        this.endShape = endShape;
-        this.startConnectPoint = new ConnectPoint(startPoint);
-        this.endConnectPoint = new ConnectPoint(endPoint);
+    public BasicLink(Port startPort, Port endPort, int depth) {
+        super(startPort != null ? startPort.getX() : 0,
+              startPort != null ? startPort.getY() : 0,
+              endPort != null ? endPort.getX() : 0,
+              endPort != null ? endPort.getY() : 0,
+              depth);
+        this.startPort = startPort != null ? startPort : new Port(0, 0);
+        this.endPort = endPort != null ? endPort : new Port(0, 0);
     }
 
     @Override
     public abstract void draw(Graphics g);
-
-    @Override
-    public boolean isInside(int x, int y) {
-        Point start = getStartPoint();
-        Point end = getEndPoint();
-        return distanceToSegment(x, y, start.x, start.y, end.x, end.y) <= 5;
-    }
 
     protected Graphics2D prepareGraphics(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
@@ -42,91 +32,37 @@ public abstract class BasicLink extends CanvasElement {
         return g2;
     }
 
-    protected int distanceToSegment(int px, int py, int x1, int y1, int x2, int y2) {
-        double lengthSquared = Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2);
-        if (lengthSquared == 0) {
-            return (int) Math.hypot(px - x1, py - y1);
-        }
-        double t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / lengthSquared;
-        t = Math.max(0, Math.min(1, t));
-        double projX = x1 + t * (x2 - x1);
-        double projY = y1 + t * (y2 - y1);
-        return (int) Math.hypot(px - projX, py - projY);
+    public Port getStartPort() {
+        return startPort;
+    }
+
+    public Port getEndPort() {
+        return endPort;
     }
 
     @Override
-    public void move(int dx, int dy) {
-        // Link endpoints are bound to ports, so direct translation is intentionally ignored.
-    }
-
-    public CanvasElement getStartShape() {
-        return startShape;
-    }
-
-    public CanvasElement getEndShape() {
-        return endShape;
-    }
-
-    public void setPortBinding(int startPortIndex, int endPortIndex) {
-        this.startPortIndex = startPortIndex;
-        this.endPortIndex = endPortIndex;
-        syncConnectPoints();
-    }
-
-    private void syncConnectPoints() {
-        if (startPortIndex >= 0) {
-            List<Point> ports = startShape.getPorts();
-            if (startPortIndex < ports.size()) {
-                startConnectPoint.setPoint(ports.get(startPortIndex));
-            }
-        }
-
-        if (endPortIndex >= 0) {
-            List<Point> ports = endShape.getPorts();
-            if (endPortIndex < ports.size()) {
-                endConnectPoint.setPoint(ports.get(endPortIndex));
-            }
-        }
-    }
-
-    @Override
-    public boolean affectsBoundingBox() {
+    public boolean isSelectable() {
         return false;
     }
 
     @Override
-    public boolean shouldDeleteWith(java.util.Set<CanvasElement> selectedShapes) {
-        return selectedShapes.contains(startShape) || selectedShapes.contains(endShape);
-    }
-
-    public Point getStartPoint() {
-        syncConnectPoints();
-        return startConnectPoint.getPoint();
-    }
-
-    public Point getEndPoint() {
-        syncConnectPoints();
-        return endConnectPoint.getPoint();
-    }
-
-    @Override
     public int getX1() {
-        return getStartPoint().x;
+        return getStartPort().getX();
     }
 
     @Override
     public int getY1() {
-        return getStartPoint().y;
+        return getStartPort().getY();
     }
 
     @Override
     public int getX2() {
-        return getEndPoint().x;
+        return getEndPort().getX();
     }
 
     @Override
     public int getY2() {
-        return getEndPoint().y;
+        return getEndPort().getY();
     }
 
     @Override

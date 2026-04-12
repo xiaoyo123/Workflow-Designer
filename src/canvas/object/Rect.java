@@ -14,7 +14,7 @@ public class Rect extends BasicObject {
 
     @Override
     public void draw(Graphics g) {
-        g.setColor(labelColor);
+        g.setColor(fillColor);
         g.fillRect(getLeft(), getTop(), getWidth(), getHeight());
 
         g.setColor(Color.BLACK);

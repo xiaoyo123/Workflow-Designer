@@ -8,30 +8,35 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import canvas.CanvasElement;
+import canvas.Element;
 
-public class Composite extends CanvasElement {
-    private final List<CanvasElement> members = new ArrayList<>();
+public class Composite extends Element {
+    private final List<Element> members = new ArrayList<>();
 
-    public Composite(List<CanvasElement> shapes, int depth) {
+    public Composite(List<Element> elements, int depth) {
         super(0, 0, 0, 0, depth);
-        members.addAll(shapes);
+        members.addAll(elements);
         updateBounds();
     }
 
-    public List<CanvasElement> getMembers() {
+    public List<Element> getMembers() {
         return new ArrayList<>(members);
     }
 
-    public void addMember(CanvasElement shape) {
-        members.add(shape);
+    @Override
+    public boolean isSelectable() {
+        return true;
+    }
+
+    public void addMember(Element element) {
+        members.add(element);
         updateBounds();
     }
 
     @Override
-    public void collectMovedShapes(java.util.Set<CanvasElement> out) {
-        for (CanvasElement member : members) {
-            member.collectMovedShapes(out);
+    public void collectMovedElements(java.util.Set<Element> out) {
+        for (Element member : members) {
+            member.collectMovedElements(out);
         }
     }
 
@@ -40,25 +45,23 @@ public class Composite extends CanvasElement {
             return;
         }
 
-        List<CanvasElement> boundTargets = members.stream()
-            .filter(CanvasElement::affectsBoundingBox)
-                .toList();
+        List<Element> boundTargets = members.stream().toList();
 
         if (boundTargets.isEmpty()) {
             boundTargets = members;
         }
 
-        x1 = boundTargets.stream().mapToInt(CanvasElement::getLeft).min().orElse(0);
-        y1 = boundTargets.stream().mapToInt(CanvasElement::getTop).min().orElse(0);
-        x2 = boundTargets.stream().mapToInt(CanvasElement::getRight).max().orElse(0);
-        y2 = boundTargets.stream().mapToInt(CanvasElement::getBottom).max().orElse(0);
+        x1 = boundTargets.stream().mapToInt(Element::getLeft).min().orElse(0);
+        y1 = boundTargets.stream().mapToInt(Element::getTop).min().orElse(0);
+        x2 = boundTargets.stream().mapToInt(Element::getRight).max().orElse(0);
+        y2 = boundTargets.stream().mapToInt(Element::getBottom).max().orElse(0);
     }
 
     @Override
     public void draw(Graphics g) {
         members.stream()
-               .sorted(Comparator.comparingInt(CanvasElement::getDepth).reversed())
-               .forEach(shape -> shape.draw(g));
+               .sorted(Comparator.comparingInt(Element::getDepth).reversed())
+             .forEach(element -> element.draw(g));
 
         if (isSelected) {
             Graphics2D g2 = (Graphics2D) g.create();
@@ -74,13 +77,13 @@ public class Composite extends CanvasElement {
 
     @Override
     public boolean isInside(int x, int y) {
-        return members.stream().anyMatch(shape -> shape.isInside(x, y));
+        return members.stream().anyMatch(element -> element.isInside(x, y));
     }
 
     @Override
     public void move(int dx, int dy) {
-        for (CanvasElement shape : members) {
-            shape.move(dx, dy);
+        for (Element element : members) {
+            element.move(dx, dy);
         }
         updateBounds();
     }

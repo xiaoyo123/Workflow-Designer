@@ -3,22 +3,67 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import canvas.CanvasElement;
+import canvas.Element;
+import canvas.Port;
 
-public abstract class BasicObject extends CanvasElement {
+public abstract class BasicObject extends Element {
     protected String labelName = "";
-    protected Color labelColor = new Color(240, 240, 240);
+    protected Color fillColor = new Color(240, 240, 240);
+    protected final List<Port> ports = new ArrayList<>();
 
     public BasicObject(int x1, int y1, int x2, int y2, int depth) {
         super(x1, y1, x2, y2, depth);
+        initializePorts();
+    }
+
+    protected void initializePorts() {
+        if (!ports.isEmpty()) {
+            return;
+        }
+
+        for (int index = 0; index < 8; index++) {
+            ports.add(new Port(this, 0, 0));
+        }
+        refreshPorts();
+    }
+
+    protected void refreshPorts() {
+        if (ports.size() < 8) {
+            initializePorts();
+            return;
+        }
+
+        int left = getLeft();
+        int top = getTop();
+        int right = getRight();
+        int bottom = getBottom();
+        int centerX = getCenterX();
+        int centerY = getCenterY();
+
+        ports.get(0).setX(left);
+        ports.get(0).setY(top);
+        ports.get(1).setX(centerX);
+        ports.get(1).setY(top);
+        ports.get(2).setX(right);
+        ports.get(2).setY(top);
+        ports.get(3).setX(right);
+        ports.get(3).setY(centerY);
+        ports.get(4).setX(right);
+        ports.get(4).setY(bottom);
+        ports.get(5).setX(centerX);
+        ports.get(5).setY(bottom);
+        ports.get(6).setX(left);
+        ports.get(6).setY(bottom);
+        ports.get(7).setX(left);
+        ports.get(7).setY(centerY);
     }
 
     protected void drawPorts(Graphics g) {
         if (!isSelected()) return;
 
         g.setColor(Color.BLACK);
-        for (Point port : getPorts()) {
-            g.fillRect(port.x - 3, port.y - 3, 6, 6);
+        for (Port port : ports) {
+            g.fillRect(port.getX() - 3, port.getY() - 3, 6, 6);
         }
     }
 
@@ -36,24 +81,24 @@ public abstract class BasicObject extends CanvasElement {
     }
 
     @Override
-    public List<Point> getPorts() {
-        List<Point> ports = new ArrayList<>();
-        int left = getLeft();
-        int top = getTop();
-        int right = getRight();
-        int bottom = getBottom();
-        int centerX = getCenterX();
-        int centerY = getCenterY();
+    public Port getPortAt(int x, int y) {
+        for (Port port : ports) {
+            if (Math.abs(port.getX() - x) <= 10 && Math.abs(port.getY() - y) <= 10) {
+                return port;
+            }
+        }
+        return null;
+    }
 
-        ports.add(new Point(left, top));
-        ports.add(new Point(centerX, top));
-        ports.add(new Point(right, top));
-        ports.add(new Point(right, centerY));
-        ports.add(new Point(right, bottom));
-        ports.add(new Point(centerX, bottom));
-        ports.add(new Point(left, bottom));
-        ports.add(new Point(left, centerY));
-        return ports;
+    @Override
+    public int getPortIndex(Port port) {
+        return ports.indexOf(port);
+    }
+
+    @Override
+    public void move(int dx, int dy) {
+        super.move(dx, dy);
+        refreshPorts();
     }
 
     @Override
@@ -62,29 +107,8 @@ public abstract class BasicObject extends CanvasElement {
     }
 
     @Override
-    public int getHandleAt(Point p) {
-        int left = getLeft();
-        int top = getTop();
-        int right = getRight();
-        int bottom = getBottom();
-        int centerX = getCenterX();
-        int centerY = getCenterY();
-        int tolerance = 10;
-
-        if (isNear(p.x, p.y, left, top, tolerance)) return 0;
-        if (isNear(p.x, p.y, centerX, top, tolerance)) return 1;
-        if (isNear(p.x, p.y, right, top, tolerance)) return 2;
-        if (isNear(p.x, p.y, right, centerY, tolerance)) return 3;
-        if (isNear(p.x, p.y, right, bottom, tolerance)) return 4;
-        if (isNear(p.x, p.y, centerX, bottom, tolerance)) return 5;
-        if (isNear(p.x, p.y, left, bottom, tolerance)) return 6;
-        if (isNear(p.x, p.y, left, centerY, tolerance)) return 7;
-
-        return -1;
-    }
-
-    private boolean isNear(int x, int y, int targetX, int targetY, int tolerance) {
-        return Math.abs(x - targetX) <= tolerance && Math.abs(y - targetY) <= tolerance;
+    public boolean isSelectable() {
+        return true;
     }
 
     @Override
@@ -93,6 +117,7 @@ public abstract class BasicObject extends CanvasElement {
         this.y1 = y1;
         this.x2 = x2;
         this.y2 = y2;
+        refreshPorts();
     }
 
     public String getLabelName() {
@@ -104,10 +129,10 @@ public abstract class BasicObject extends CanvasElement {
     }
 
     public Color getFillColor() {
-        return labelColor;
+        return fillColor;
     }
 
     public void setFillColor(Color fillColor) {
-        this.labelColor = fillColor != null ? fillColor : this.labelColor;
+        this.fillColor = fillColor != null ? fillColor : this.fillColor;
     }
 }

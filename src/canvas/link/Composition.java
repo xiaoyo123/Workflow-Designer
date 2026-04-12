@@ -7,29 +7,29 @@ import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 
-import canvas.CanvasElement;
+import canvas.Port;
 
 public class Composition extends BasicLink {
-	public Composition(CanvasElement startShape, Point startPoint, CanvasElement endShape, Point endPoint, int depth) {
-		super(startShape, startPoint, endShape, endPoint, depth);
+	public Composition(Port startPort, Port endPort, int depth) {
+		super(startPort, endPort, depth);
 	}
 
 	@Override
 	public void draw(Graphics g) {
 		Graphics2D g2 = prepareGraphics(g);
-		Point start = getStartPoint();
-		Point end = getEndPoint();
+		Port start = getStartPort();
+		Port end = getEndPort();
 
-		double angle = Math.atan2(end.y - start.y, end.x - start.x);
+		double angle = Math.atan2(end.getY() - start.getY(), end.getX() - start.getX());
 		int arrowDepth = 20;
-		int adjustedEndX = (int) (end.x - arrowDepth * Math.cos(angle));
-		int adjustedEndY = (int) (end.y - arrowDepth * Math.sin(angle));
-		g2.drawLine(start.x, start.y, adjustedEndX, adjustedEndY);
+		int adjustedEndX = (int) (end.getX() - arrowDepth * Math.cos(angle));
+		int adjustedEndY = (int) (end.getY() - arrowDepth * Math.sin(angle));
+		g2.drawLine(start.getX(), start.getY(), adjustedEndX, adjustedEndY);
 
-		double arrowAngle = Math.atan2(end.y - start.y, end.x - start.x);
+		double arrowAngle = Math.atan2(end.getY() - start.getY(), end.getX() - start.getX());
 		AffineTransform tx = g2.getTransform();
-		int x = end.x;
-		int y = end.y;
+		int x = end.getX();
+		int y = end.getY();
 		int size = 10;
 		g2.translate(x, y);
 		g2.rotate(arrowAngle - Math.PI / 2);

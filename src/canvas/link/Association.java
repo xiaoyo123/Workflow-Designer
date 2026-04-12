@@ -2,30 +2,29 @@ package canvas.link;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Point;
 
-import canvas.CanvasElement;
+import canvas.Port;
 
 public class Association extends BasicLink {
-	public Association(CanvasElement startShape, Point startPoint, CanvasElement endShape, Point endPoint, int depth) {
-		super(startShape, startPoint, endShape, endPoint, depth);
+	public Association(Port startPort, Port endPort, int depth) {
+		super(startPort, endPort, depth);
 	}
 
 	@Override
 	public void draw(Graphics g) {
 		Graphics2D g2 = prepareGraphics(g);
-		Point start = getStartPoint();
-		Point end = getEndPoint();
-		g2.drawLine(start.x, start.y, end.x, end.y);
+		Port start = getStartPort();
+		Port end = getEndPort();
+		g2.drawLine(start.getX(), start.getY(), end.getX(), end.getY());
 
-		double angle = Math.atan2(end.y - start.y, end.x - start.x);
+		double angle = Math.atan2(end.getY() - start.getY(), end.getX() - start.getX());
 		int size = 10;
-		int x1 = (int) (end.x - size * Math.cos(angle - Math.PI / 6));
-		int y1 = (int) (end.y - size * Math.sin(angle - Math.PI / 6));
-		int x2 = (int) (end.x - size * Math.cos(angle + Math.PI / 6));
-		int y2 = (int) (end.y - size * Math.sin(angle + Math.PI / 6));
+		int x1 = (int) (end.getX() - size * Math.cos(angle - Math.PI / 6));
+		int y1 = (int) (end.getY() - size * Math.sin(angle - Math.PI / 6));
+		int x2 = (int) (end.getX() - size * Math.cos(angle + Math.PI / 6));
+		int y2 = (int) (end.getY() - size * Math.sin(angle + Math.PI / 6));
 
-		g2.drawLine(end.x, end.y, x1, y1);
-		g2.drawLine(end.x, end.y, x2, y2);
+		g2.drawLine(end.getX(), end.getY(), x1, y1);
+		g2.drawLine(end.getX(), end.getY(), x2, y2);
 	}
 }

@@ -35,7 +35,7 @@ public class CreateMode implements Mode {
     @Override
     public void mouseReleased(MouseEvent e) {
         int depth = canvas.getFrontDepth() - 1;
-        CanvasElement newShape;
+        Element newShape;
         Point endPoint = e.getPoint();
 
         // Supports press-on-toolbar then release-on-canvas flow by using release point.
@@ -47,7 +47,7 @@ public class CreateMode implements Mode {
             newShape = new Rect(anchor.x, anchor.y, endPoint.x, endPoint.y, depth);
         }
 
-        canvas.addShape(newShape);
+        canvas.addElement(newShape);
 
         if (oneShot && onComplete != null) {
             onComplete.run();

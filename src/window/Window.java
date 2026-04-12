@@ -2,7 +2,7 @@ package window;
 import javax.swing.*;
 
 import canvas.Canvas;
-import canvas.CanvasElement;
+import canvas.Element;
 import canvas.link.Association;
 import canvas.link.Composition;
 import canvas.link.Generalization;
@@ -122,9 +122,9 @@ public class Window extends JFrame {
         fileMenu.add(exitItem);
 
         JMenuItem groupItem = new JMenuItem("Group");
-        groupItem.addActionListener(e -> canvas.groupSelectedShapes());
+        groupItem.addActionListener(e -> canvas.groupSelectedElements());
         JMenuItem ungroupItem = new JMenuItem("Ungroup");
-        ungroupItem.addActionListener(e -> canvas.ungroupSelectedShape());
+        ungroupItem.addActionListener(e -> canvas.ungroupSelectedElement());
         JMenuItem setAppearanceItem = new JMenuItem("Label");
         setAppearanceItem.addActionListener(e -> setLabelAndColorForSelection());
         editMenu.add(groupItem);
@@ -189,11 +189,11 @@ public class Window extends JFrame {
         }
 
         int depth = canvas.getFrontDepth() - 1;
-        CanvasElement newShape = "Oval".equals(shapeType)
+        Element newShape = "Oval".equals(shapeType)
             ? new Oval(canvasPoint.x, canvasPoint.y, depth)
             : new Rect(canvasPoint.x, canvasPoint.y, depth);
 
-        canvas.addShape(newShape);
+        canvas.addElement(newShape);
     }
 
     private void updateButtonHighlight(String activeName) {
@@ -233,7 +233,7 @@ public class Window extends JFrame {
     }
 
     private void setLabelAndColorForSelection() {
-        List<CanvasElement> selected = canvas.getSelectedShapes();
+        List<Element> selected = canvas.getSelectedElements();
         if (selected.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please select at least one object first.", "Label", JOptionPane.INFORMATION_MESSAGE);
             return;
@@ -241,7 +241,7 @@ public class Window extends JFrame {
 
         List<BasicObject> editableObjects = new ArrayList<>();
         boolean containsComposite = false;
-        for (CanvasElement shape : selected) {
+        for (Element shape : selected) {
             if (shape instanceof BasicObject object) {
                 editableObjects.add(object);
             } else if (shape instanceof Composite) {
@@ -309,7 +309,7 @@ public class Window extends JFrame {
         canvas.repaint();
     }
 
-    private String resolveInitialLabel(CanvasElement shape) {
+    private String resolveInitialLabel(Element shape) {
         if (shape instanceof BasicObject) {
             return ((BasicObject) shape).getLabelName();
         }
@@ -320,7 +320,7 @@ public class Window extends JFrame {
         return "";
     }
 
-    private Color resolveInitialColor(CanvasElement shape) {
+    private Color resolveInitialColor(Element shape) {
         if (shape instanceof BasicObject) {
             return ((BasicObject) shape).getFillColor();
         }
