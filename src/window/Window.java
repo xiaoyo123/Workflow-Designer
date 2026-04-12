@@ -17,7 +17,6 @@ import mode.SelectMode;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -126,7 +125,7 @@ public class Window extends JFrame {
         JMenuItem ungroupItem = new JMenuItem("Ungroup");
         ungroupItem.addActionListener(e -> canvas.ungroupSelectedElement());
         JMenuItem setAppearanceItem = new JMenuItem("Label");
-        setAppearanceItem.addActionListener(e -> setLabelAndColorForSelection());
+        setAppearanceItem.addActionListener(e -> setLabelForSelection());
         editMenu.add(groupItem);
         editMenu.add(ungroupItem);
         editMenu.add(setAppearanceItem);
@@ -232,40 +231,22 @@ public class Window extends JFrame {
         return new ImageIcon(scaled);
     }
 
-    private void setLabelAndColorForSelection() {
+    private void setLabelForSelection() {
         List<Element> selected = canvas.getSelectedElements();
-        if (selected.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please select at least one object first.", "Label", JOptionPane.INFORMATION_MESSAGE);
+        if (selected.size() != 1) {
+            JOptionPane.showMessageDialog(this, "Please select exactly one basic object.", "Label", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
-        List<BasicObject> editableObjects = new ArrayList<>();
-        boolean containsComposite = false;
-        for (Element shape : selected) {
-            if (shape instanceof BasicObject object) {
-                editableObjects.add(object);
-            } else if (shape instanceof Composite) {
-                containsComposite = true;
-            }
-        }
-
-        if (editableObjects.isEmpty()) {
-            String message = containsComposite
-                ? "Composite cannot be assigned label/color."
-                : "Please select at least one object first.";
-            JOptionPane.showMessageDialog(this, message, "Label", JOptionPane.INFORMATION_MESSAGE);
+        Element selectedElement = selected.get(0);
+        List<Element> members = selectedElement.getGroupMembers();
+        if (members != null) {
+            JOptionPane.showMessageDialog(this, "Cannot assign label to a group. Please select a single basic object.", "Label", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
+        BasicObject object = BasicObject.class.cast(selectedElement);
 
-        if (containsComposite) {
-            JOptionPane.showMessageDialog(this, "Composite cannot be assigned label/color. Only basic objects will be updated.", "Label", JOptionPane.INFORMATION_MESSAGE);
-        }
-
-        BasicObject first = editableObjects.get(0);
-        String initialLabel = resolveInitialLabel(first);
-        Color initialColor = resolveInitialColor(first);
-
-        JTextField labelField = new JTextField(initialLabel, 16);
+        JTextField labelField = new JTextField(object.getLabelName(), 16);
         ColorOption[] options = new ColorOption[] {
             new ColorOption("Light Gray", new Color(240, 240, 240)),
             new ColorOption("White", Color.WHITE),
@@ -280,7 +261,7 @@ public class Window extends JFrame {
         JComboBox<ColorOption> colorBox = new JComboBox<>(options);
         int initialIndex = 0;
         for (int i = 0; i < options.length; i++) {
-            if (options[i].color.equals(initialColor)) {
+            if (options[i].color.equals(object.getFillColor())) {
                 initialIndex = i;
                 break;
             }
@@ -298,37 +279,12 @@ public class Window extends JFrame {
             return;
         }
 
-        String input = labelField.getText();
+        object.setLabelName(labelField.getText());
         ColorOption selectedColorOption = (ColorOption) colorBox.getSelectedItem();
-        Color chosenColor = selectedColorOption != null ? selectedColorOption.color : new Color(240, 240, 240);
-
-        for (BasicObject object : editableObjects) {
-            object.setLabelName(input);
-            object.setFillColor(chosenColor);
+        if (selectedColorOption != null) {
+            object.setFillColor(selectedColorOption.color);
         }
         canvas.repaint();
-    }
-
-    private String resolveInitialLabel(Element shape) {
-        if (shape instanceof BasicObject) {
-            return ((BasicObject) shape).getLabelName();
-        }
-
-        if (shape instanceof Composite) {
-            return "";
-        }
-        return "";
-    }
-
-    private Color resolveInitialColor(Element shape) {
-        if (shape instanceof BasicObject) {
-            return ((BasicObject) shape).getFillColor();
-        }
-
-        if (shape instanceof Composite) {
-            return new Color(240, 240, 240);
-        }
-        return new Color(240, 240, 240);
     }
 
     private static class ColorOption {

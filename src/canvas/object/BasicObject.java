@@ -40,22 +40,23 @@ public abstract class BasicObject extends Element {
         int centerX = getCenterX();
         int centerY = getCenterY();
 
-        ports.get(0).setX(left);
-        ports.get(0).setY(top);
-        ports.get(1).setX(centerX);
-        ports.get(1).setY(top);
-        ports.get(2).setX(right);
-        ports.get(2).setY(top);
-        ports.get(3).setX(right);
-        ports.get(3).setY(centerY);
-        ports.get(4).setX(right);
-        ports.get(4).setY(bottom);
-        ports.get(5).setX(centerX);
-        ports.get(5).setY(bottom);
-        ports.get(6).setX(left);
-        ports.get(6).setY(bottom);
-        ports.get(7).setX(left);
-        ports.get(7).setY(centerY);
+        // 將 8 個方位座標依序存入二維陣列中
+        int[][] coordinates = {
+            {left, top},       // 0: top-left
+            {centerX, top},    // 1: top-center
+            {right, top},      // 2: top-right
+            {right, centerY},  // 3: right-center
+            {right, bottom},   // 4: bottom-right
+            {centerX, bottom}, // 5: bottom-center
+            {left, bottom},    // 6: bottom-left
+            {left, centerY}    // 7: left-center
+        };
+
+        // 使用迴圈一次更新所有 Port 的座標
+        for (int i = 0; i < coordinates.length; i++) {
+            ports.get(i).setX(coordinates[i][0]);
+            ports.get(i).setY(coordinates[i][1]);
+        }
     }
 
     protected void drawPorts(Graphics g) {

@@ -2,6 +2,7 @@ package canvas;
 
 import java.awt.*;
 import java.util.Set;
+import java.util.List;
 
 public abstract class Element {
     protected int x1, x2, y1, y2;
@@ -22,7 +23,6 @@ public abstract class Element {
         return false;
     }
 
-    
     public void setSelected(boolean selected) {
         this.isSelected = selected;
     }
@@ -42,13 +42,7 @@ public abstract class Element {
         return false;
     }
 
-    public int getHandleAt(Point p) {
-        return -1;
-    }
-
-    public void setBounds(int x1, int y1, int x2, int y2) {
-        // Default: shape does not support direct resize.
-    }
+    public void setBounds(int x1, int y1, int x2, int y2) {}
 
     public Port getPortAt(int x, int y) {
         return null;
@@ -65,7 +59,10 @@ public abstract class Element {
     public void collectMovedElements(Set<Element> out) {
         out.add(this);
     }
-
+    
+    public List<Element> getGroupMembers() {
+        return null;
+    }
 
     public int getLeft() { return Math.min(x1, x2); }
     public int getTop() { return Math.min(y1, y2); }

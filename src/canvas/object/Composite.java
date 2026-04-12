@@ -87,4 +87,9 @@ public class Composite extends Element {
         }
         updateBounds();
     }
+
+    @Override
+    public List<Element> getGroupMembers() {
+        return new ArrayList<>(members);
+    }
 }

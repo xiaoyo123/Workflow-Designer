@@ -60,23 +60,26 @@ public class Oval extends BasicObject {
             return;
         }
 
+        // 直接取得外框與中心座標
+        int left = getLeft();
+        int top = getTop();
+        int right = getRight();
+        int bottom = getBottom();
         int centerX = getCenterX();
         int centerY = getCenterY();
-        double radiusX = getWidth() / 2.0;
-        double radiusY = getHeight() / 2.0;
 
-        double[] angles = {
-            Math.PI / 2,      // top
-            0,                 // right
-            -Math.PI / 2,      // bottom
-            Math.PI            // left
+        // 依序定義 Oval 的四個 Port: top, right, bottom, left
+        int[][] coordinates = {
+            {centerX, top},    // 0: top
+            {right, centerY},  // 1: right
+            {centerX, bottom}, // 2: bottom
+            {left, centerY}    // 3: left
         };
 
-        for (int index = 0; index < angles.length; index++) {
-            int x = (int) Math.round(centerX + radiusX * Math.cos(angles[index]));
-            int y = (int) Math.round(centerY - radiusY * Math.sin(angles[index]));
-            ports.get(index).setX(x);
-            ports.get(index).setY(y);
+        // 使用迴圈一次更新所有 Port 的座標
+        for (int i = 0; i < coordinates.length; i++) {
+            ports.get(i).setX(coordinates[i][0]);
+            ports.get(i).setY(coordinates[i][1]);
         }
     }
 

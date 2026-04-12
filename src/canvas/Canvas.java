@@ -10,10 +10,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Comparator;
-import java.util.Set;
 
 public class Canvas extends JPanel {
     private Mode currentMode;
@@ -171,7 +169,6 @@ public class Canvas extends JPanel {
         }
 
         List<Element> grouped = new ArrayList<>(selectedElements);
-        includeInternalLinks(grouped);
 
         for (Element element : grouped) {
             clearSelectionFlag(element);
@@ -183,42 +180,18 @@ public class Canvas extends JPanel {
         repaint();
     }
 
-    private void includeInternalLinks(List<Element> grouped) {
-        Set<Element> groupedSet = new HashSet<>(grouped);
-        Set<Element> groupedMembers = new HashSet<>();
-
-        for (Element element : grouped) {
-            element.collectMovedElements(groupedMembers);
-        }
-
-        for (Element element : elements) {
-            if (!(element instanceof BasicLink link) || groupedSet.contains(element)) {
-                continue;
-            }
-
-            Element startOwner = link.getStartPort().getOwner();
-            Element endOwner = link.getEndPort().getOwner();
-
-            if (groupedMembers.contains(startOwner) && groupedMembers.contains(endOwner)) {
-                grouped.add(link);
-                groupedSet.add(link);
-            }
-        }
-    }
-
     public void ungroupSelectedElement() {
         if (selectedElements.size() != 1) {
             return;
         }
 
         Element selected = selectedElements.get(0);
-        if (!(selected instanceof Composite)) {
+        List<Element> members = selected.getGroupMembers();
+        if (members == null) {
             return;
         }
-
-        Composite composite = (Composite) selected;
-        elements.remove(composite);
-        elements.addAll(composite.getMembers());
+        elements.remove(selected);
+        elements.addAll(members);
         unselectAll();
         repaint();
     }
@@ -273,11 +246,6 @@ public class Canvas extends JPanel {
 
     private void clearSelectionFlag(Element element) {
         element.setSelected(false);
-        if (element instanceof Composite composite) {
-            for (Element child : composite.getMembers()) {
-                clearSelectionFlag(child);
-            }
-        }
     }
 
     public void setPreviewLink(BasicLink previewLink) {
