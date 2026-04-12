@@ -1,4 +1,4 @@
-package model.link;
+package canvas.link;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -7,18 +7,17 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.util.List;
 
-import model.Shape;
-import model.object.Linkable;
+import canvas.CanvasElement;
 
-public abstract class Link extends Shape {
-    private final Shape startShape;
-    private final Shape endShape;
+public abstract class BasicLink extends CanvasElement {
+    private final CanvasElement startShape;
+    private final CanvasElement endShape;
     private ConnectPoint startConnectPoint;
     private ConnectPoint endConnectPoint;
     private int startPortIndex = -1;
     private int endPortIndex = -1;
 
-    public Link(Shape startShape, Point startPoint, Shape endShape, Point endPoint, int depth) {
+    public BasicLink(CanvasElement startShape, Point startPoint, CanvasElement endShape, Point endPoint, int depth) {
         super(startPoint.x, startPoint.y, endPoint.x, endPoint.y, depth);
         this.startShape = startShape;
         this.endShape = endShape;
@@ -55,11 +54,16 @@ public abstract class Link extends Shape {
         return (int) Math.hypot(px - projX, py - projY);
     }
 
-    public Shape getStartShape() {
+    @Override
+    public void move(int dx, int dy) {
+        // Link endpoints are bound to ports, so direct translation is intentionally ignored.
+    }
+
+    public CanvasElement getStartShape() {
         return startShape;
     }
 
-    public Shape getEndShape() {
+    public CanvasElement getEndShape() {
         return endShape;
     }
 
@@ -70,15 +74,15 @@ public abstract class Link extends Shape {
     }
 
     private void syncConnectPoints() {
-        if (startShape instanceof Linkable startLinkable && startPortIndex >= 0) {
-            List<Point> ports = startLinkable.getPorts();
+        if (startPortIndex >= 0) {
+            List<Point> ports = startShape.getPorts();
             if (startPortIndex < ports.size()) {
                 startConnectPoint.setPoint(ports.get(startPortIndex));
             }
         }
 
-        if (endShape instanceof Linkable endLinkable && endPortIndex >= 0) {
-            List<Point> ports = endLinkable.getPorts();
+        if (endPortIndex >= 0) {
+            List<Point> ports = endShape.getPorts();
             if (endPortIndex < ports.size()) {
                 endConnectPoint.setPoint(ports.get(endPortIndex));
             }
@@ -86,7 +90,12 @@ public abstract class Link extends Shape {
     }
 
     @Override
-    public boolean shouldDeleteWith(java.util.Set<Shape> selectedShapes) {
+    public boolean affectsBoundingBox() {
+        return false;
+    }
+
+    @Override
+    public boolean shouldDeleteWith(java.util.Set<CanvasElement> selectedShapes) {
         return selectedShapes.contains(startShape) || selectedShapes.contains(endShape);
     }
 

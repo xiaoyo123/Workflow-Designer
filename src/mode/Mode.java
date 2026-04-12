@@ -1,4 +1,4 @@
-package controller;
+package mode;
 
 import java.awt.event.MouseEvent;
 

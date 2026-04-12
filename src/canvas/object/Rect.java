@@ -1,9 +1,9 @@
-package model.object;
+package canvas.object;
 
 import java.awt.Graphics;
 import java.awt.Color;
 
-public class Rect extends Object {
+public class Rect extends BasicObject {
     public Rect(int x, int y, int depth) {
         super(x, y, x + 100, y + 100, depth);
     }

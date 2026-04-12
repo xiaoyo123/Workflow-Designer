@@ -1,4 +1,4 @@
-package model.object;
+package canvas.object;
 
 import java.awt.Graphics;
 import java.awt.Color;
@@ -6,7 +6,7 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Oval extends Object {
+public class Oval extends BasicObject {
     public Oval(int x, int y, int depth) {
         super(x, y, x + 100, y + 60, depth);
     }

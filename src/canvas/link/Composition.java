@@ -1,4 +1,4 @@
-package model.link;
+package canvas.link;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -7,10 +7,10 @@ import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 
-import model.Shape;
+import canvas.CanvasElement;
 
-public class Composition extends Link {
-	public Composition(Shape startShape, Point startPoint, Shape endShape, Point endPoint, int depth) {
+public class Composition extends BasicLink {
+	public Composition(CanvasElement startShape, Point startPoint, CanvasElement endShape, Point endPoint, int depth) {
 		super(startShape, startPoint, endShape, endPoint, depth);
 	}
 

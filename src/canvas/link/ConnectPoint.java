@@ -1,4 +1,4 @@
-package model.link;
+package canvas.link;
 
 import java.awt.Point;
 

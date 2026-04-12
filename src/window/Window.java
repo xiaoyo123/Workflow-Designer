@@ -1,23 +1,26 @@
-package view;
+package window;
 import javax.swing.*;
+
+import canvas.Canvas;
+import canvas.CanvasElement;
+import canvas.link.Association;
+import canvas.link.Composition;
+import canvas.link.Generalization;
+import canvas.object.Composite;
+import canvas.object.BasicObject;
+import canvas.object.Oval;
+import canvas.object.Rect;
+import mode.LinkMode;
+import mode.Mode;
+import mode.SelectMode;
+
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import controller.LinkMode;
-import controller.Mode;
-import controller.SelectMode;
-import model.Shape;
-import model.link.Association;
-import model.link.Composition;
-import model.link.Generalization;
-import model.object.Object;
-import model.object.Composite;
-import model.object.Oval;
-import model.object.Rect;
 
 public class Window extends JFrame {
     private static final int TOOL_ICON_SIZE = 28;
@@ -186,7 +189,7 @@ public class Window extends JFrame {
         }
 
         int depth = canvas.getFrontDepth() - 1;
-        Shape newShape = "Oval".equals(shapeType)
+        CanvasElement newShape = "Oval".equals(shapeType)
             ? new Oval(canvasPoint.x, canvasPoint.y, depth)
             : new Rect(canvasPoint.x, canvasPoint.y, depth);
 
@@ -230,13 +233,35 @@ public class Window extends JFrame {
     }
 
     private void setLabelAndColorForSelection() {
-        List<Shape> selected = canvas.getSelectedShapes();
+        List<CanvasElement> selected = canvas.getSelectedShapes();
         if (selected.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please select at least one object first.", "Set Label/Color", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please select at least one object first.", "Label", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
-        Shape first = selected.get(0);
+        List<BasicObject> editableObjects = new ArrayList<>();
+        boolean containsComposite = false;
+        for (CanvasElement shape : selected) {
+            if (shape instanceof BasicObject object) {
+                editableObjects.add(object);
+            } else if (shape instanceof Composite) {
+                containsComposite = true;
+            }
+        }
+
+        if (editableObjects.isEmpty()) {
+            String message = containsComposite
+                ? "Composite cannot be assigned label/color."
+                : "Please select at least one object first.";
+            JOptionPane.showMessageDialog(this, message, "Label", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        if (containsComposite) {
+            JOptionPane.showMessageDialog(this, "Composite cannot be assigned label/color. Only basic objects will be updated.", "Label", JOptionPane.INFORMATION_MESSAGE);
+        }
+
+        BasicObject first = editableObjects.get(0);
         String initialLabel = resolveInitialLabel(first);
         Color initialColor = resolveInitialColor(first);
 
@@ -268,7 +293,7 @@ public class Window extends JFrame {
         panel.add(new JLabel("Color:"));
         panel.add(colorBox);
 
-        int result = JOptionPane.showConfirmDialog(this, panel, "Set Label/Color", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        int result = JOptionPane.showConfirmDialog(this, panel, "Label", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         if (result != JOptionPane.OK_OPTION) {
             return;
         }
@@ -277,65 +302,33 @@ public class Window extends JFrame {
         ColorOption selectedColorOption = (ColorOption) colorBox.getSelectedItem();
         Color chosenColor = selectedColorOption != null ? selectedColorOption.color : new Color(240, 240, 240);
 
-        for (Shape shape : selected) {
-            applyLabelRecursive(shape, input);
-            applyColorRecursive(shape, chosenColor);
+        for (BasicObject object : editableObjects) {
+            object.setLabelName(input);
+            object.setFillColor(chosenColor);
         }
         canvas.repaint();
     }
 
-    private String resolveInitialLabel(Shape shape) {
-        if (shape instanceof Object) {
-            return ((Object) shape).getLabelName();
+    private String resolveInitialLabel(CanvasElement shape) {
+        if (shape instanceof BasicObject) {
+            return ((BasicObject) shape).getLabelName();
         }
 
         if (shape instanceof Composite) {
-            List<Shape> members = ((Composite) shape).getMembers();
-            if (!members.isEmpty()) {
-                return resolveInitialLabel(members.get(0));
-            }
+            return "";
         }
         return "";
     }
 
-    private Color resolveInitialColor(Shape shape) {
-        if (shape instanceof Object) {
-            return ((Object) shape).getFillColor();
+    private Color resolveInitialColor(CanvasElement shape) {
+        if (shape instanceof BasicObject) {
+            return ((BasicObject) shape).getFillColor();
         }
 
         if (shape instanceof Composite) {
-            List<Shape> members = ((Composite) shape).getMembers();
-            if (!members.isEmpty()) {
-                return resolveInitialColor(members.get(0));
-            }
+            return new Color(240, 240, 240);
         }
         return new Color(240, 240, 240);
-    }
-
-    private void applyColorRecursive(Shape shape, Color color) {
-        if (shape instanceof Object) {
-            ((Object) shape).setFillColor(color);
-            return;
-        }
-
-        if (shape instanceof Composite) {
-            for (Shape member : ((Composite) shape).getMembers()) {
-                applyColorRecursive(member, color);
-            }
-        }
-    }
-
-    private void applyLabelRecursive(Shape shape, String label) {
-        if (shape instanceof Object) {
-            ((Object) shape).setLabelName(label);
-            return;
-        }
-
-        if (shape instanceof Composite) {
-            for (Shape member : ((Composite) shape).getMembers()) {
-                applyLabelRecursive(member, label);
-            }
-        }
     }
 
     private static class ColorOption {

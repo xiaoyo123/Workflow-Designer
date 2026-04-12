@@ -1,29 +1,20 @@
-package model.object;
+package canvas.object;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import model.Shape;
+import canvas.CanvasElement;
 
-public abstract class Object extends Shape implements Movable, Resizable, Linkable {
-    protected boolean isSelected = false;
+public abstract class BasicObject extends CanvasElement {
     protected String labelName = "";
     protected Color labelColor = new Color(240, 240, 240);
 
-    public Object(int x1, int y1, int x2, int y2, int depth) {
+    public BasicObject(int x1, int y1, int x2, int y2, int depth) {
         super(x1, y1, x2, y2, depth);
     }
 
-    public void setSelected(boolean selected) {
-        this.isSelected = selected;
-    }
-
-    public boolean isSelected() {
-        return isSelected;
-    }
-
     protected void drawPorts(Graphics g) {
-        if (!isSelected) return;
+        if (!isSelected()) return;
 
         g.setColor(Color.BLACK);
         for (Point port : getPorts()) {
@@ -66,17 +57,34 @@ public abstract class Object extends Shape implements Movable, Resizable, Linkab
     }
 
     @Override
-    public Point getPortAt(int x, int y) {
-        int index = getPortIndexAt(x, y);
-        return index >= 0 ? getPorts().get(index) : null;
+    public boolean canResize() {
+        return true;
     }
 
     @Override
-    public void move(int dx, int dy){
-        this.x1 += dx;
-        this.y1 += dy;
-        this.x2 += dx;
-        this.y2 += dy;
+    public int getHandleAt(Point p) {
+        int left = getLeft();
+        int top = getTop();
+        int right = getRight();
+        int bottom = getBottom();
+        int centerX = getCenterX();
+        int centerY = getCenterY();
+        int tolerance = 10;
+
+        if (isNear(p.x, p.y, left, top, tolerance)) return 0;
+        if (isNear(p.x, p.y, centerX, top, tolerance)) return 1;
+        if (isNear(p.x, p.y, right, top, tolerance)) return 2;
+        if (isNear(p.x, p.y, right, centerY, tolerance)) return 3;
+        if (isNear(p.x, p.y, right, bottom, tolerance)) return 4;
+        if (isNear(p.x, p.y, centerX, bottom, tolerance)) return 5;
+        if (isNear(p.x, p.y, left, bottom, tolerance)) return 6;
+        if (isNear(p.x, p.y, left, centerY, tolerance)) return 7;
+
+        return -1;
+    }
+
+    private boolean isNear(int x, int y, int targetX, int targetY, int tolerance) {
+        return Math.abs(x - targetX) <= tolerance && Math.abs(y - targetY) <= tolerance;
     }
 
     @Override

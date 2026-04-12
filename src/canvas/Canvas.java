@@ -1,8 +1,10 @@
-package view;
+package canvas;
 
 import javax.swing.*;
 
-import controller.Mode;
+import canvas.link.BasicLink;
+import canvas.object.Composite;
+import mode.Mode;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -12,18 +14,12 @@ import java.util.List;
 import java.util.Comparator;
 import java.util.Set;
 
-import model.Shape;
-import model.link.Link;
-import model.object.Linkable;
-import model.object.Object;
-import model.object.Composite;
-
 public class Canvas extends JPanel {
     private Mode currentMode;
-    private List<Shape> shapes = new ArrayList<>();
-    private List<Shape> selectedShapes = new ArrayList<>();
+    private List<CanvasElement> shapes = new ArrayList<>();
+    private List<CanvasElement> selectedShapes = new ArrayList<>();
     private Rectangle marquee = null;
-    private Link previewLink = null;
+    private BasicLink previewLink = null;
 
     public Canvas() {
         setBackground(Color.WHITE);
@@ -35,9 +31,9 @@ public class Canvas extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        shapes.sort(Comparator.comparingInt(Shape::getDepth).reversed());
+        shapes.sort(Comparator.comparingInt(CanvasElement::getDepth).reversed());
 
-        for (Shape shape : shapes) {
+        for (CanvasElement shape : shapes) {
             shape.draw(g);
         }
 
@@ -59,12 +55,12 @@ public class Canvas extends JPanel {
         }
     }
 
-    public void addShape(Shape s) {
+    public void addShape(CanvasElement s) {
         shapes.add(s);
         repaint();
     }
 
-    public List<Shape> getShapes() {
+    public List<CanvasElement> getShapes() {
         return new ArrayList<>(shapes);
     }
 
@@ -73,14 +69,14 @@ public class Canvas extends JPanel {
     }
 
     public int getFrontDepth() {
-        return shapes.stream().mapToInt(Shape::getDepth).min().orElse(0);
+        return shapes.stream().mapToInt(CanvasElement::getDepth).min().orElse(0);
     }
 
     public int getBackDepth() {
-        return shapes.stream().mapToInt(Shape::getDepth).max().orElse(0);
+        return shapes.stream().mapToInt(CanvasElement::getDepth).max().orElse(0);
     }
 
-    public void bringToFront(Shape shape) {
+    public void bringToFront(CanvasElement shape) {
         if (shape == null) {
             return;
         }
@@ -89,7 +85,7 @@ public class Canvas extends JPanel {
         repaint();
     }
 
-    public void sendToBack(Shape shape) {
+    public void sendToBack(CanvasElement shape) {
         if (shape == null) {
             return;
         }
@@ -99,52 +95,32 @@ public class Canvas extends JPanel {
     }
 
     public void unselectAll() {
-        for (Shape shape : shapes) {
-            if (shape instanceof Object) {
-                ((Object) shape).setSelected(false);
-            } else if (shape instanceof Composite) {
-                ((Composite) shape).setSelected(false);
-            }
+        for (CanvasElement shape : shapes) {
+            shape.setSelected(false);
         }
         selectedShapes.clear();
         repaint();
     }
 
-    public void selectOnly(Shape shape) {
+    public void selectOnly(CanvasElement shape) {
         unselectAll();
-        if (shape instanceof Object) {
-            ((Object) shape).setSelected(true);
-        } else if (shape instanceof Composite) {
-            ((Composite) shape).setSelected(true);
-        }
+        shape.setSelected(true);
         selectedShapes.add(shape);
         repaint();
     }
 
-    public void toggleSelection(Shape shape) {
-        if (shape instanceof Object) {
-            Object basicObject = (Object) shape;
-            boolean selected = !basicObject.isSelected();
-            basicObject.setSelected(selected);
-            if (selected) {
-                selectedShapes.add(shape);
-            } else {
-                selectedShapes.remove(shape);
-            }
-        } else if (shape instanceof Composite) {
-            Composite composite = (Composite) shape;
-            boolean selected = !composite.isSelected();
-            composite.setSelected(selected);
-            if (selected) {
-                selectedShapes.add(shape);
-            } else {
-                selectedShapes.remove(shape);
-            }
+    public void toggleSelection(CanvasElement shape) {
+        boolean selected = !shape.isSelected();
+        shape.setSelected(selected);
+        if (selected) {
+            selectedShapes.add(shape);
+        } else {
+            selectedShapes.remove(shape);
         }
         repaint();
     }
 
-    public List<Shape> getSelectedShapes() {
+    public List<CanvasElement> getSelectedShapes() {
         return new ArrayList<>(selectedShapes);
     }
 
@@ -163,14 +139,10 @@ public class Canvas extends JPanel {
             unselectAll();
         }
 
-        for (Shape shape : shapes) {
+        for (CanvasElement shape : shapes) {
             Rectangle bounds = new Rectangle(shape.getLeft(), shape.getTop(), shape.getWidth(), shape.getHeight());
             if (rect.intersects(bounds)) {
-                if (shape instanceof Object) {
-                    ((Object) shape).setSelected(true);
-                } else if (shape instanceof Composite) {
-                    ((Composite) shape).setSelected(true);
-                }
+                shape.setSelected(true);
                 if (!selectedShapes.contains(shape)) {
                     selectedShapes.add(shape);
                 }
@@ -184,29 +156,29 @@ public class Canvas extends JPanel {
             return;
         }
 
-        List<Shape> grouped = new ArrayList<>(selectedShapes);
+        List<CanvasElement> grouped = new ArrayList<>(selectedShapes);
         includeInternalLinks(grouped);
 
-        for (Shape shape : grouped) {
+        for (CanvasElement shape : grouped) {
             clearSelectionFlag(shape);
         }
-        int groupDepth = grouped.stream().mapToInt(Shape::getDepth).min().orElse(0);
+        int groupDepth = grouped.stream().mapToInt(CanvasElement::getDepth).min().orElse(0);
         shapes.removeAll(grouped);
         shapes.add(new Composite(grouped, groupDepth));
         unselectAll();
         repaint();
     }
 
-    private void includeInternalLinks(List<Shape> grouped) {
-        Set<Shape> groupedSet = new HashSet<>(grouped);
-        Set<Shape> groupedMembers = new HashSet<>();
+    private void includeInternalLinks(List<CanvasElement> grouped) {
+        Set<CanvasElement> groupedSet = new HashSet<>(grouped);
+        Set<CanvasElement> groupedMembers = new HashSet<>();
 
-        for (Shape shape : grouped) {
+        for (CanvasElement shape : grouped) {
             shape.collectMovedShapes(groupedMembers);
         }
 
-        for (Shape shape : shapes) {
-            if (!(shape instanceof Link link) || groupedSet.contains(shape)) {
+        for (CanvasElement shape : shapes) {
+            if (!(shape instanceof BasicLink link) || groupedSet.contains(shape)) {
                 continue;
             }
 
@@ -222,7 +194,7 @@ public class Canvas extends JPanel {
             return;
         }
 
-        Shape selected = selectedShapes.get(0);
+        CanvasElement selected = selectedShapes.get(0);
         if (!(selected instanceof Composite)) {
             return;
         }
@@ -234,13 +206,13 @@ public class Canvas extends JPanel {
         repaint();
     }
 
-    public Object findPortOwnerAt(int x, int y) {
-        List<Shape> ordered = new ArrayList<>(shapes);
-        ordered.sort(Comparator.comparingInt(Shape::getDepth));
+    public CanvasElement findPortOwnerAt(int x, int y) {
+        List<CanvasElement> ordered = new ArrayList<>(shapes);
+        ordered.sort(Comparator.comparingInt(CanvasElement::getDepth));
 
-        for (Shape shape : ordered) {
-            if (shape instanceof Linkable linkable && linkable.getPortAt(x, y) != null) {
-                return (Object) shape;
+        for (CanvasElement shape : ordered) {
+            if (shape.getPortAt(x, y) != null) {
+                return shape;
             }
         }
         return null;
@@ -274,28 +246,23 @@ public class Canvas extends JPanel {
         setFocusable(true);
     }
 
-    public Shape findShapeAt(int x, int y) {
+    public CanvasElement findShapeAt(int x, int y) {
         return shapes.stream()
                      .filter(s -> s.isInside(x, y))
-                     .min(Comparator.comparingInt(Shape::getDepth))
+                     .min(Comparator.comparingInt(CanvasElement::getDepth))
                      .orElse(null);
     }
 
-    private void clearSelectionFlag(Shape shape) {
-        if (shape instanceof Object) {
-            ((Object) shape).setSelected(false);
-            return;
-        }
-
-        if (shape instanceof Composite) {
-            ((Composite) shape).setSelected(false);
-            for (Shape child : ((Composite) shape).getMembers()) {
+    private void clearSelectionFlag(CanvasElement shape) {
+        shape.setSelected(false);
+        if (shape instanceof Composite composite) {
+            for (CanvasElement child : composite.getMembers()) {
                 clearSelectionFlag(child);
             }
         }
     }
 
-    public void setPreviewLink(Link previewLink) {
+    public void setPreviewLink(BasicLink previewLink) {
         this.previewLink = previewLink;
         repaint();
     }

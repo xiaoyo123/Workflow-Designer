@@ -1,25 +1,24 @@
-package controller;
-
-import model.Shape;
-import model.link.Link;
-import model.object.Object;
-import view.Canvas;
+package mode;
 
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 
+import canvas.Canvas;
+import canvas.CanvasElement;
+import canvas.link.BasicLink;
+
 public class LinkMode implements Mode {
     @FunctionalInterface
     public interface LinkCreator {
-        Link create(Shape start, Point startPoint, Shape end, Point endPoint, int depth);
+        BasicLink create(CanvasElement start, Point startPoint, CanvasElement end, Point endPoint, int depth);
     }
 
     private final Canvas canvas;
     private final LinkCreator linkCreator;
-    private Object startObject;
+    private CanvasElement startObject;
     private Point startPort;
     private int startPortIndex = -1;
-    private Link previewLink;
+    private BasicLink previewLink;
 
     public LinkMode(Canvas canvas, LinkCreator linkCreator) {
         this.canvas = canvas;
@@ -55,7 +54,7 @@ public class LinkMode implements Mode {
             return;
         }
 
-        Object endObject = canvas.findPortOwnerAt(e.getX(), e.getY());
+        CanvasElement endObject = canvas.findPortOwnerAt(e.getX(), e.getY());
         Point endPort = endObject != null ? endObject.getPortAt(e.getX(), e.getY()) : null;
         if (endObject == null || endPort == null) {
             return;
@@ -70,7 +69,7 @@ public class LinkMode implements Mode {
 
         int depth = canvas.getBackDepth() + 1;
         int endPortIndex = endObject.getPortIndexAt(e.getX(), e.getY());
-        Link link = linkCreator.create(startObject, startPort, endObject, endPort, depth);
+        BasicLink link = linkCreator.create(startObject, startPort, endObject, endPort, depth);
         if (link == null) {
             startObject = null;
             startPort = null;

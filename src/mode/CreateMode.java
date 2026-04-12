@@ -1,11 +1,12 @@
-package controller;
-
-import view.*;
-import model.*;
-import model.object.Oval;
-import model.object.Rect;
+package mode;
 
 import java.awt.event.MouseEvent;
+
+import canvas.*;
+import canvas.object.Oval;
+import canvas.object.Rect;
+import window.*;
+
 import java.awt.Point;
 
 public class CreateMode implements Mode {
@@ -34,7 +35,7 @@ public class CreateMode implements Mode {
     @Override
     public void mouseReleased(MouseEvent e) {
         int depth = canvas.getFrontDepth() - 1;
-        Shape newShape;
+        CanvasElement newShape;
         Point endPoint = e.getPoint();
 
         // Supports press-on-toolbar then release-on-canvas flow by using release point.

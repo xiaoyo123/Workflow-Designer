@@ -1,10 +1,4 @@
-package controller;
-
-import view.*;
-import model.*;
-import model.object.Object;
-import model.object.Movable;
-import model.object.Resizable;
+package mode;
 
 import java.awt.event.MouseEvent;
 import java.awt.Point;
@@ -12,16 +6,19 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
+import canvas.*;
+import window.*;
+
 public class SelectMode implements Mode {
     private static final int MIN_RESIZE_SIZE = 40;
     private Canvas canvas;
-    private final List<Shape> selectedShapes = new ArrayList<>();
-    private Shape anchorShape = null;
+    private final List<CanvasElement> selectedShapes = new ArrayList<>();
+    private CanvasElement anchorShape = null;
     private Point lastPoint;
     private Point dragStart;
     private boolean isBoxSelecting = false;
     private boolean isResizing = false;
-    private Object resizingObject = null;
+    private CanvasElement resizingObject = null;
     private int resizeHandle = -1;
     private int resizeRefLeft;
     private int resizeRefTop;
@@ -41,16 +38,16 @@ public class SelectMode implements Mode {
         resizingObject = null;
         resizeHandle = -1;
         clearResizeReference();
-        Shape hitShape = canvas.findShapeAt(e.getX(), e.getY());
+        CanvasElement hitShape = canvas.findShapeAt(e.getX(), e.getY());
 
-        if (hitShape instanceof Resizable
-            && hitShape instanceof Object
-            && ((Object) hitShape).isSelected()
-                && selectedShapes.size() == 1) {
-            int handle = getHandleIndex((Object) hitShape, e.getPoint());
+        if (hitShape != null
+            && hitShape.canResize()
+            && hitShape.isSelected()
+            && selectedShapes.size() == 1) {
+            int handle = hitShape.getHandleAt(e.getPoint());
             if (handle != -1) {
                 isResizing = true;
-                resizingObject = (Object) hitShape;
+                resizingObject = hitShape;
                 resizeHandle = handle;
                 captureResizeReference(resizingObject);
                 anchorShape = hitShape;
@@ -85,9 +82,7 @@ public class SelectMode implements Mode {
         selectedShapes.add(hitShape);
         anchorShape = hitShape;
 
-        if (hitShape instanceof Object) {
-            ((Object) hitShape).setSelected(true);
-        }
+        hitShape.setSelected(true);
     }
 
     @Override
@@ -113,10 +108,8 @@ public class SelectMode implements Mode {
 
         int dx = e.getX() - lastPoint.x;
         int dy = e.getY() - lastPoint.y;
-        for (Shape shape : selectedShapes) {
-            if (shape instanceof Movable movable) {
-                movable.move(dx, dy);
-            }
+        for (CanvasElement shape : selectedShapes) {
+            shape.move(dx, dy);
         }
         lastPoint = e.getPoint();
     }
@@ -152,32 +145,7 @@ public class SelectMode implements Mode {
         canvas.clearMarquee();
     }
 
-    private int getHandleIndex(Object object, Point p) {
-        int left = object.getLeft();
-        int top = object.getTop();
-        int right = object.getRight();
-        int bottom = object.getBottom();
-        int centerX = object.getCenterX();
-        int centerY = object.getCenterY();
-        int tolerance = 10;
-
-        if (isNear(p.x, p.y, left, top, tolerance)) return 0;
-        if (isNear(p.x, p.y, centerX, top, tolerance)) return 1;
-        if (isNear(p.x, p.y, right, top, tolerance)) return 2;
-        if (isNear(p.x, p.y, right, centerY, tolerance)) return 3;
-        if (isNear(p.x, p.y, right, bottom, tolerance)) return 4;
-        if (isNear(p.x, p.y, centerX, bottom, tolerance)) return 5;
-        if (isNear(p.x, p.y, left, bottom, tolerance)) return 6;
-        if (isNear(p.x, p.y, left, centerY, tolerance)) return 7;
-
-        return -1;
-    }
-
-    private boolean isNear(int x, int y, int targetX, int targetY, int tolerance) {
-        return Math.abs(x - targetX) <= tolerance && Math.abs(y - targetY) <= tolerance;
-    }
-
-    private void resizeObjectFromHandle(Object object, int handle, int mouseX, int mouseY) {
+    private void resizeObjectFromHandle(CanvasElement object, int handle, int mouseX, int mouseY) {
         int x1;
         int y1;
         int x2;
@@ -260,7 +228,7 @@ public class SelectMode implements Mode {
         object.setBounds(x1, y1, x2, y2);
     }
 
-    private void captureResizeReference(Object object) {
+    private void captureResizeReference(CanvasElement object) {
         resizeRefLeft = object.getLeft();
         resizeRefTop = object.getTop();
         resizeRefRight = object.getRight();
