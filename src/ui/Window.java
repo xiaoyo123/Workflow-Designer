@@ -71,8 +71,6 @@ public class Window extends JFrame {
             case "Association"    -> new LinkMode(controller, LinkType.ASSOCIATION);
             case "Generalization" -> new LinkMode(controller, LinkType.GENERALIZATION);
             case "Composition"    -> new LinkMode(controller, LinkType.COMPOSITION);
-            case "Rect"           -> new CreateMode(controller, ObjectType.RECT);
-            case "Oval"           -> new CreateMode(controller, ObjectType.OVAL);
             default               -> new SelectMode(controller);
         };
         canvas.setMode(mode);
