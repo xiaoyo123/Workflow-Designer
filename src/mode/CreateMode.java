@@ -14,13 +14,16 @@ public class CreateMode implements Mode {
     }
 
     @Override
-    public void mousePressed(int x, int y) {}
-
-    @Override
-    public void mouseDragged(int x, int y) {
-        controller.setPreviewRect(startX, startY, x, y);
+    public void mousePressed(int x, int y) {
+        startX = x;
+        startY = y;
     }
 
     @Override
-    public void mouseReleased(int x, int y) {}
+    public void mouseDragged(int x, int y) {}
+
+    @Override
+    public void mouseReleased(int x, int y) {
+        controller.createElement(type, x, y);
+    }
 }

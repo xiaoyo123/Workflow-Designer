@@ -8,8 +8,6 @@ import element.object.ObjectType;
 import element.object.isBasicObject;
 import mode.*;
 import java.awt.*;
-import java.awt.event.AWTEventListener;
-import java.awt.event.MouseEvent;
 import java.util.List;
 
 public class Window extends JFrame {
@@ -22,18 +20,6 @@ public class Window extends JFrame {
     private final Canvas canvas;
     private final Sidebar sidebar;
     private String activeModeName = "Select";
-    private String previousModeName = "Select";
-    private boolean temporaryCreateActive = false;
-    private ObjectType temporaryShapeType;
-    private final AWTEventListener temporaryCreateReleaseListener = event -> {
-        if (!temporaryCreateActive || !(event instanceof MouseEvent mouseEvent)) {
-            return;
-        }
-        if (mouseEvent.getID() != MouseEvent.MOUSE_RELEASED || mouseEvent.getButton() != MouseEvent.BUTTON1) {
-            return;
-        }
-        handleTemporaryCreateRelease(mouseEvent);
-    };
 
     public Window() {
         controller = new CanvasController();
@@ -51,7 +37,14 @@ public class Window extends JFrame {
                 @Override
                 public void onModeSelected(String name) { switchMode(name); }
                 @Override
-                public void onShapePressed(String name) { beginTemporaryCreate(name); }
+                public void onShapePressed(String name) { 
+                    ObjectType type = name.equals("Rect") ? ObjectType.RECT :
+                                      name.equals("Oval") ? ObjectType.OVAL : null;
+                    sidebar.updateButtonHighlight(name);
+                    canvas.beginExternalCreate(type, () -> {
+                        sidebar.updateButtonHighlight(activeModeName);
+                    });
+                }
                 @Override
                 public void onShapeReleased(String name) {}
             });
@@ -72,9 +65,6 @@ public class Window extends JFrame {
     }
 
     private void switchMode(String name) {
-        if (temporaryCreateActive) {
-            return;
-        }
 
         Mode mode = switch (name) {
             case "Select"         -> new SelectMode(controller);
@@ -88,56 +78,6 @@ public class Window extends JFrame {
         canvas.setMode(mode);
         activeModeName = name;
         sidebar.updateButtonHighlight(name);
-    }
-
-    private void beginTemporaryCreate(String shapeName) {
-        ObjectType targetType = parseShapeType(shapeName);
-        if (targetType == null) {
-            return;
-        }
-
-        if (temporaryCreateActive) {
-            endTemporaryCreate();
-        }
-
-        previousModeName = activeModeName;
-        temporaryCreateActive = true;
-        temporaryShapeType = targetType;
-        sidebar.updateButtonHighlight(shapeName);
-        Toolkit.getDefaultToolkit().addAWTEventListener(
-            temporaryCreateReleaseListener,
-            AWTEvent.MOUSE_EVENT_MASK
-        );
-    }
-
-    private void handleTemporaryCreateRelease(MouseEvent e) {
-        if (!temporaryCreateActive || temporaryShapeType == null) {
-            return;
-        }
-
-        Point canvasPoint = new Point(e.getLocationOnScreen());
-        SwingUtilities.convertPointFromScreen(canvasPoint, canvas);
-        if (canvas.contains(canvasPoint)) {
-            controller.createElement(temporaryShapeType, canvasPoint.x, canvasPoint.y);
-        }
-
-        endTemporaryCreate();
-    }
-
-    private void endTemporaryCreate() {
-        Toolkit.getDefaultToolkit().removeAWTEventListener(temporaryCreateReleaseListener);
-        temporaryCreateActive = false;
-        temporaryShapeType = null;
-        String restoreMode = previousModeName;
-        switchMode(restoreMode);
-    }
-
-    private ObjectType parseShapeType(String shapeName) {
-        return switch (shapeName) {
-            case "Rect" -> ObjectType.RECT;
-            case "Oval" -> ObjectType.OVAL;
-            default -> null;
-        };
     }
 
     private void setLabelForSelection() {

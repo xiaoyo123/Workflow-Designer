@@ -3,6 +3,8 @@ package ui;
 import javax.swing.*;
 import controller.CanvasController;
 import element.Element;
+import element.object.ObjectType;
+import mode.CreateMode;
 import mode.Mode;
 import mode.SelectMode;
 import java.awt.*;
@@ -12,6 +14,7 @@ import java.util.Comparator;
 public class Canvas extends JPanel {
     private final CanvasController controller;
     private Mode currentMode;
+    private Mode previousMode;
 
     private Rectangle previewRect   = null;
     private int[]     previewLink   = null;
@@ -62,7 +65,10 @@ public class Canvas extends JPanel {
         g.setStroke(new BasicStroke(1f));
     }
 
-    public void setMode(Mode mode)  { this.currentMode = mode; }
+    public void setMode(Mode mode)  { 
+        this.previousMode = this.currentMode;
+        this.currentMode = mode;
+    }
 
     public void setPreviewRect(int x1, int y1, int x2, int y2) {
         int x = Math.min(x1, x2), y = Math.min(y1, y2);
@@ -128,5 +134,28 @@ public class Canvas extends JPanel {
         addMouseListener(adapter);
         addMouseMotionListener(adapter);
         setFocusable(true);
+    }
+    public void beginExternalCreate(ObjectType type, Runnable onComplete){
+        Mode createMode = new CreateMode(controller, type);
+        setMode(createMode);
+
+        AWTEventListener releaseGuard = new AWTEventListener(){
+            @Override
+            public void eventDispatched(AWTEvent event) {
+                if(!(event instanceof MouseEvent me)) return;
+                if(me.getID() != MouseEvent.MOUSE_RELEASED) return;
+
+                Point p = me.getLocationOnScreen();
+                SwingUtilities.convertPointFromScreen(p, Canvas.this);
+                if(Canvas.this.contains(p))
+                    currentMode.mouseReleased(p.x, p.y);
+
+                Toolkit.getDefaultToolkit().removeAWTEventListener(this);
+                currentMode = previousMode != null ? previousMode : new SelectMode(controller);
+                onComplete.run();
+                repaint();
+            }
+        };
+        Toolkit.getDefaultToolkit().addAWTEventListener(releaseGuard, AWTEvent.MOUSE_EVENT_MASK);
     }
 }
