@@ -32,7 +32,7 @@ public class Sidebar extends JPanel {
     private final Listener listener;
 
     public Sidebar(String[] buttonNames, Set<String> shapeTools, Listener listener) {
-        super(new GridLayout(6, 1, 6, 6));
+        super(new GridLayout(buttonNames.length, 1, 6, 6));
         this.listener = listener;
 
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
