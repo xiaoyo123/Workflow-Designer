@@ -24,7 +24,7 @@ public abstract class BasicObject extends Element
     // 由子類別定義各自的 port 位置（存相對偏移量）
     protected abstract List<Port> initPorts();
 
-    // ── Connectable ──
+    // ── click port to handle connect and resize ──
 
     @Override
     public Port getPortAt(int mx, int my) {
@@ -32,11 +32,6 @@ public abstract class BasicObject extends Element
             .filter(p -> p.isInRange(mx, my))
             .findFirst()
             .orElse(null);
-    }
-
-    @Override
-    public int getPortIndex(Port port) {
-        return ports.indexOf(port);
     }
 
     // ── Resizable ──
@@ -67,6 +62,13 @@ public abstract class BasicObject extends Element
     @Override
     public boolean isSelectable() { return true; }
 
+    @Override
+    public boolean isContainedIn(int left, int top, int right, int bottom) {
+        return x >= left && y >= top &&
+               x + width  <= right &&
+               y + height <= bottom;
+    }
+
     // ── Labelable ──
 
     @Override
@@ -78,10 +80,6 @@ public abstract class BasicObject extends Element
     @Override
     public void setFillColor(Color color)    { this.fillColor = color != null ? color : this.fillColor; }
 
-    @Override
-    public void move(int dx, int dy) {
-        super.move(dx, dy);
-    }
 
     // ── 共用繪製 ──
 
@@ -106,12 +104,6 @@ public abstract class BasicObject extends Element
 
     // ── Element abstract ──
 
-    @Override
-    public boolean isContainedIn(int left, int top, int right, int bottom) {
-        return x >= left && y >= top &&
-               x + width  <= right &&
-               y + height <= bottom;
-    }
 
     // getters
     public int getWidth()  { return width; }
