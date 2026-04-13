@@ -1,4 +1,4 @@
-package window;
+package ui;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -30,12 +30,10 @@ public class Sidebar extends JPanel {
     private static final int TOOL_ICON_SIZE = 28;
     private final Map<String, JButton> toolButtons = new LinkedHashMap<>();
     private final Listener listener;
-    private final Set<String> shapeTools;
 
     public Sidebar(String[] buttonNames, Set<String> shapeTools, Listener listener) {
         super(new GridLayout(6, 1, 6, 6));
         this.listener = listener;
-        this.shapeTools = shapeTools;
 
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         setBackground(new Color(245, 245, 245));

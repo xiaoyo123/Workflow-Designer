@@ -1,88 +1,42 @@
 package mode;
 
-import java.awt.event.MouseEvent;
-
-import element.Connectable;
-import element.Element;
+import controller.CanvasController;
 import element.Port;
-import element.link.BasicLink;
-import window.Canvas;
+import element.link.LinkType;
 
 public class LinkMode implements Mode {
-    @FunctionalInterface
-    public interface LinkCreator {
-        BasicLink create(Port startPort, Port endPort, int depth);
-    }
-
-    private final Canvas canvas;
-    private final LinkCreator linkCreator;
-    private Element startElement;
+    private final CanvasController controller;
+    private final LinkType type;
     private Port startPort;
-    private BasicLink previewLink;
 
-    public LinkMode(Canvas canvas, LinkCreator linkCreator) {
-        this.canvas = canvas;
-        this.linkCreator = linkCreator;
+    public LinkMode(CanvasController controller, LinkType type) {
+        this.controller = controller;
+        this.type       = type;
     }
 
     @Override
-    public void mousePressed(MouseEvent e) {
-        startElement = canvas.findPortOwnerAt(e.getX(), e.getY());
-        startPort = getPort(startElement, e.getX(), e.getY());
-        
+    public void mousePressed(int x, int y) {
+        startPort = controller.getPortAt(x, y);
         if (startPort != null) {
-            previewLink = linkCreator.create(startPort, new Port(e.getX(), e.getY()), 0);
-            canvas.setPreviewLink(previewLink);
+            controller.setPreviewLink(
+                startPort.getX(), startPort.getY(), x, y);
         }
     }
 
     @Override
-    public void mouseDragged(MouseEvent e) {
+    public void mouseDragged(int x, int y) {
         if (startPort != null) {
-            previewLink = linkCreator.create(startPort, new Port(e.getX(), e.getY()), 0);
-            canvas.setPreviewLink(previewLink);
+            controller.setPreviewLink(
+                startPort.getX(), startPort.getY(), x, y);
         }
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {
-        canvas.clearPreviewLink();
-        previewLink = null;
-        
-        if (startElement == null || startPort == null) {
-            return;
-        }
-
-        Element endElement = canvas.findPortOwnerAt(e.getX(), e.getY());
-        Port endPort = getPort(endElement, e.getX(), e.getY());
-        if (endElement == null || endPort == null) {
-            return;
-        }
-
-        // Prevent self-linking
-        if (startElement == endElement) {
-            startElement = null;
-            startPort = null;
-            return;
-        }
-
-        int depth = canvas.getBackDepth() + 1;
-        BasicLink link = linkCreator.create(startPort, endPort, depth);
-        if (link == null) {
-            startElement = null;
-            startPort = null;
-            return;
-        }
-        canvas.addElement(link);
-        
-        startElement = null;
+    public void mouseReleased(int x, int y) {
+        controller.clearPreviewLink();
+        if (startPort == null) return;
+        Port endPort = controller.getPortAt(x, y);
+        controller.createLink(startPort, endPort, type);
         startPort = null;
-    }
-
-    private Port getPort(Element element, int x, int y) {
-        if (!(element instanceof Connectable connectable)) {
-            return null;
-        }
-        return connectable.getPortAt(x, y);
     }
 }

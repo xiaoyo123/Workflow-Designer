@@ -1,6 +1,6 @@
 import javax.swing.SwingUtilities;
 
-import window.Window;
+import ui.Window;
 
 public class Main {
     public static void main(String[] args) {

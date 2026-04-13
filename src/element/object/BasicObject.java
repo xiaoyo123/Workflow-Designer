@@ -1,97 +1,37 @@
 package element.object;
+
+import element.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
-import element.Connectable;
-import element.Element;
-import element.Labelable;
-import element.Port;
-import element.Resizable;
+public abstract class BasicObject extends Element
+        implements isBasicObject {
 
-public abstract class BasicObject extends Element implements Connectable, Labelable, Resizable {
+    protected int width, height;
     protected String labelName = "";
-    protected Color fillColor = new Color(240, 240, 240);
-    protected final List<Port> ports = new ArrayList<>();
+    protected Color  fillColor = new Color(240, 240, 240);
+    protected List<Port> ports;
+
+    private static final int MIN_SIZE = 20;
 
     public BasicObject(int x1, int y1, int x2, int y2, int depth) {
-        super(x1, y1, x2, y2, depth);
-        initializePorts();
+        super(Math.min(x1, x2), Math.min(y1, y2), depth);
+        this.width  = Math.max(Math.abs(x2 - x1), MIN_SIZE);
+        this.height = Math.max(Math.abs(y2 - y1), MIN_SIZE);
+        this.ports  = initPorts();
     }
 
-    protected void initializePorts() {
-        if (!ports.isEmpty()) {
-            return;
-        }
+    // 由子類別定義各自的 port 位置（存相對偏移量）
+    protected abstract List<Port> initPorts();
 
-        for (int index = 0; index < 8; index++) {
-            ports.add(new Port(this, 0, 0));
-        }
-        refreshPorts();
-    }
-
-    protected void refreshPorts() {
-        if (ports.size() < 8) {
-            initializePorts();
-            return;
-        }
-
-        int left = getLeft();
-        int top = getTop();
-        int right = getRight();
-        int bottom = getBottom();
-        int centerX = getCenterX();
-        int centerY = getCenterY();
-
-        // 將 8 個方位座標依序存入二維陣列中
-        int[][] coordinates = {
-            {left, top},       // 0: top-left
-            {centerX, top},    // 1: top-center
-            {right, top},      // 2: top-right
-            {right, centerY},  // 3: right-center
-            {right, bottom},   // 4: bottom-right
-            {centerX, bottom}, // 5: bottom-center
-            {left, bottom},    // 6: bottom-left
-            {left, centerY}    // 7: left-center
-        };
-
-        // 使用迴圈一次更新所有 Port 的座標
-        for (int i = 0; i < coordinates.length; i++) {
-            ports.get(i).setX(coordinates[i][0]);
-            ports.get(i).setY(coordinates[i][1]);
-        }
-    }
-
-    protected void drawPorts(Graphics g) {
-        if (!isSelected() && !isHovered()) return;
-
-        g.setColor(Color.BLACK);
-        for (Port port : ports) {
-            g.fillRect(port.getX() - 3, port.getY() - 3, 6, 6);
-        }
-    }
-
-    protected void drawCenteredLabel(Graphics g) {
-        if (labelName == null || labelName.isEmpty()) {
-            return;
-        }
-
-        FontMetrics fm = g.getFontMetrics();
-        int textWidth = fm.stringWidth(labelName);
-        int textX = getCenterX() - textWidth / 2;
-        int textY = getCenterY() + (fm.getAscent() - fm.getDescent()) / 2;
-        g.setColor(Color.BLACK);
-        g.drawString(labelName, textX, textY);
-    }
+    // ── Connectable ──
 
     @Override
-    public Port getPortAt(int x, int y) {
-        for (Port port : ports) {
-            if (Math.abs(port.getX() - x) <= 10 && Math.abs(port.getY() - y) <= 10) {
-                return port;
-            }
-        }
-        return null;
+    public Port getPortAt(int mx, int my) {
+        return ports.stream()
+            .filter(p -> p.isInRange(mx, my))
+            .findFirst()
+            .orElse(null);
     }
 
     @Override
@@ -99,39 +39,85 @@ public abstract class BasicObject extends Element implements Connectable, Labela
         return ports.indexOf(port);
     }
 
-    @Override
-    public void move(int dx, int dy) {
-        super.move(dx, dy);
-        refreshPorts();
-    }
-
-    @Override
-    public boolean isSelectable() {
-        return true;
-    }
+    // ── Resizable ──
 
     @Override
     public void setBounds(int x1, int y1, int x2, int y2) {
-        this.x1 = x1;
-        this.y1 = y1;
-        this.x2 = x2;
-        this.y2 = y2;
-        refreshPorts();
+        this.x      = Math.min(x1, x2);
+        this.y      = Math.min(y1, y2);
+        this.width  = Math.max(Math.abs(x2 - x1), MIN_SIZE);
+        this.height = Math.max(Math.abs(y2 - y1), MIN_SIZE);
+
+        // Keep existing Port objects so links that reference them remain attached.
+        List<Port> updatedPorts = initPorts();
+        if (ports == null || ports.size() != updatedPorts.size()) {
+            this.ports = updatedPorts;
+            return;
+        }
+
+        for (int i = 0; i < ports.size(); i++) {
+            Port current = ports.get(i);
+            Port updated = updatedPorts.get(i);
+            current.setOffset(updated.getOffsetX(), updated.getOffsetY());
+        }
     }
 
-    public String getLabelName() {
-        return labelName;
+    // ── Selectable ──
+
+    @Override
+    public boolean isSelectable() { return true; }
+
+    // ── Labelable ──
+
+    @Override
+    public String getLabelName()             { return labelName; }
+    @Override
+    public void setLabelName(String name)    { this.labelName = name != null ? name : ""; }
+    @Override
+    public Color getFillColor()              { return fillColor; }
+    @Override
+    public void setFillColor(Color color)    { this.fillColor = color != null ? color : this.fillColor; }
+
+    @Override
+    public void move(int dx, int dy) {
+        super.move(dx, dy);
     }
 
-    public void setLabelName(String labelName) {
-        this.labelName = labelName != null ? labelName : "";
+    // ── 共用繪製 ──
+
+    protected void drawPorts(Graphics g) {
+        if (!isSelected() && !isHovered()) return;
+        g.setColor(Color.BLACK);
+        int size = Port.VISUAL_SIZE;
+        int half = size / 2;
+        for (Port p : ports) {
+            g.fillRect(p.getX() - half, p.getY() - half, size, size);
+        }
     }
 
-    public Color getFillColor() {
-        return fillColor;
+    protected void drawCenteredLabel(Graphics g) {
+        if (labelName == null || labelName.isEmpty()) return;
+        FontMetrics fm = g.getFontMetrics();
+        int tx = x + (width  - fm.stringWidth(labelName)) / 2;
+        int ty = y + (height + fm.getAscent() - fm.getDescent()) / 2;
+        g.setColor(Color.BLACK);
+        g.drawString(labelName, tx, ty);
     }
 
-    public void setFillColor(Color fillColor) {
-        this.fillColor = fillColor != null ? fillColor : this.fillColor;
+    // ── Element abstract ──
+
+    @Override
+    public boolean isContainedIn(int left, int top, int right, int bottom) {
+        return x >= left && y >= top &&
+               x + width  <= right &&
+               y + height <= bottom;
     }
+
+    // getters
+    public int getWidth()  { return width; }
+    public int getHeight() { return height; }
+    public int getRight()  { return x + width; }
+    public int getBottom() { return y + height; }
+    public int getCenterX(){ return x + width  / 2; }
+    public int getCenterY(){ return y + height / 2; }
 }

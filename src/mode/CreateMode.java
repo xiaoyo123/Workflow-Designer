@@ -1,57 +1,26 @@
 package mode;
 
-import java.awt.event.MouseEvent;
-
-import element.*;
-import window.Canvas;
-
-import java.awt.Point;
+import controller.CanvasController;
+import element.object.ObjectType;
 
 public class CreateMode implements Mode {
-    private final Canvas canvas;
-    private final ShapeFactory shapeFactory;
-    private Point startPoint;
-    private final boolean oneShot;
-    private final Runnable onComplete;
+    private final CanvasController controller;
+    private final ObjectType type;
+    private int startX, startY;
 
-    public CreateMode(Canvas canvas, ShapeFactory shapeFactory) {
-        this(canvas, shapeFactory, false, null);
-    }
-
-    public CreateMode(Canvas canvas, ShapeFactory shapeFactory, boolean oneShot, Runnable onComplete) {
-        this.canvas = canvas;
-        this.shapeFactory = shapeFactory;
-        this.oneShot = oneShot;
-        this.onComplete = onComplete;
+    public CreateMode(CanvasController controller, ObjectType type) {
+        this.controller = controller;
+        this.type       = type;
     }
 
     @Override
-    public void mousePressed(MouseEvent e) {
-        startPoint = e.getPoint();
+    public void mousePressed(int x, int y) {}
+
+    @Override
+    public void mouseDragged(int x, int y) {
+        controller.setPreviewRect(startX, startY, x, y);
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {
-        int depth = canvas.getFrontDepth() - 1;
-        Point endPoint = e.getPoint();
-
-        // Supports press-on-toolbar then release-on-canvas flow by using release point.
-        Point anchor = (startPoint != null) ? startPoint : endPoint;
-
-        Element newShape = shapeFactory.create(anchor.x, anchor.y, endPoint.x, endPoint.y, depth);
-
-        canvas.addElement(newShape);
-
-        if (oneShot && onComplete != null) {
-            onComplete.run();
-        }
-
-        startPoint = null;
-    }
-
-    @Override
-    public void mouseDragged(MouseEvent e) {
-    }
-
+    public void mouseReleased(int x, int y) {}
 }
-

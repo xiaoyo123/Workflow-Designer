@@ -1,69 +1,42 @@
 package element;
 
-import java.awt.Point;
+import element.object.BasicObject;
 
 public class Port {
-    private final Element owner;
-    private int x;
-    private int y;
+    public static final int VISUAL_SIZE = 14;
+    public static final int HIT_RADIUS = VISUAL_SIZE / 2 + 4; 
 
-    public Port(int x, int y) {
-        this.owner = null;
-        this.x = x;
-        this.y = y;
+    private final BasicObject owner;
+    private int offsetX; // 相對於 owner 左上角的偏移量
+    private int offsetY;
+
+    public Port(BasicObject owner, int offsetX, int offsetY) {
+        this.owner   = owner;
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
     }
 
-    public Port(Point point) {
-        this.owner = null;
-        this.x = point != null ? point.x : 0;
-        this.y = point != null ? point.y : 0;
+    // 絕對座標動態計算，owner 移動後自動更新
+    public int getX() { return owner.getX() + offsetX; }
+    public int getY() { return owner.getY() + offsetY; }
+
+    public boolean isInRange(int mx, int my) {
+         return Math.abs(getX() - mx) <= HIT_RADIUS &&
+             Math.abs(getY() - my) <= HIT_RADIUS;
     }
 
-    public Port(Element owner, int x, int y) {
-        this.owner = owner;
-        this.x = x;
-        this.y = y;
+    public int getOffsetX() {
+        return offsetX;
     }
 
-    public Port(Element owner, Point point) {
-        this.owner = owner;
-        this.x = point != null ? point.x : 0;
-        this.y = point != null ? point.y : 0;
+    public int getOffsetY() {
+        return offsetY;
     }
 
-    public int getX() {
-        return x;
+    public void setOffset(int offsetX, int offsetY) {
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
     }
 
-    public void setX(int x) {
-        this.x = x;
-    }
-
-    public int getY() {
-        return y;
-    }
-
-    public void setY(int y) {
-        this.y = y;
-    }
-
-    public Element getOwner() {
-        return owner;
-    }
-
-    public void setPoint(Point point) {
-        if (point != null) {
-            setX(point.x);
-            setY(point.y);
-        }
-    }
-
-    public void move(int dx, int dy) {
-        setX(getX() + dx);
-        setY(getY() + dy);
-    }
-
-    public Point getPoint() {
-        return new Point(getX(), getY());
-    }
+    public BasicObject getOwner() { return owner; }
 }

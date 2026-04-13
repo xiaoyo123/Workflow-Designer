@@ -1,107 +1,52 @@
 package element.link;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-
 import element.Element;
 import element.Port;
+import java.awt.*;
 
 public abstract class BasicLink extends Element {
-    private final Port startPort;
-    private final Port endPort;
+    private final Port     startPort;
+    private final Port     endPort;
+    private final LinkType type;
 
-    public BasicLink(Port startPort, Port endPort, int depth) {
-        super(startPort != null ? startPort.getX() : 0,
-              startPort != null ? startPort.getY() : 0,
-              endPort != null ? endPort.getX() : 0,
-              endPort != null ? endPort.getY() : 0,
-              depth);
-        this.startPort = startPort != null ? startPort : new Port(0, 0);
-        this.endPort = endPort != null ? endPort : new Port(0, 0);
+    public BasicLink(Port startPort, Port endPort, LinkType type, int depth) {
+        super(startPort.getX(), startPort.getY(), depth);
+        this.startPort = startPort;
+        this.endPort   = endPort;
+        this.type      = type;
     }
 
     @Override
-    public abstract void draw(Graphics g);
+    public void draw(Graphics g) {
+        int x1 = startPort.getX(), y1 = startPort.getY();
+        int x2 = endPort.getX(),   y2 = endPort.getY();
 
-    protected Graphics2D prepareGraphics(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
         g2.setColor(Color.BLACK);
         g2.setStroke(new BasicStroke(2f));
-        return g2;
+        g2.drawLine(x1, y1, x2, y2);
+
+        double angle = Math.atan2(y2 - y1, x2 - x1);
+        type.drawArrow(g2, x1, y1, x2, y2, angle);
     }
 
-    public Port getStartPort() {
-        return startPort;
-    }
-
-    public Port getEndPort() {
-        return endPort;
-    }
-
+    // Link 位置完全由 Port 決定，move 不需要做任何事
     @Override
-    public boolean isSelectable() {
+    public void move(int dx, int dy) {}
+
+    // 規格未定義點擊 Link 的行為，永遠回傳 false
+    @Override
+    public boolean contains(int mx, int my) { return false; }
+
+    // Link 不參與框選
+    @Override
+    public boolean isContainedIn(int left, int top, int right, int bottom) {
         return false;
     }
 
     @Override
-    public int getX1() {
-        return getStartPort().getX();
-    }
+    public boolean isSelectable() { return false; }
 
-    @Override
-    public int getY1() {
-        return getStartPort().getY();
-    }
-
-    @Override
-    public int getX2() {
-        return getEndPort().getX();
-    }
-
-    @Override
-    public int getY2() {
-        return getEndPort().getY();
-    }
-
-    @Override
-    public int getLeft() {
-        return Math.min(getX1(), getX2());
-    }
-
-    @Override
-    public int getTop() {
-        return Math.min(getY1(), getY2());
-    }
-
-    @Override
-    public int getRight() {
-        return Math.max(getX1(), getX2());
-    }
-
-    @Override
-    public int getBottom() {
-        return Math.max(getY1(), getY2());
-    }
-
-    @Override
-    public int getWidth() {
-        return Math.abs(getX2() - getX1());
-    }
-
-    @Override
-    public int getHeight() {
-        return Math.abs(getY2() - getY1());
-    }
-
-    @Override
-    public int getCenterX() {
-        return (getX1() + getX2()) / 2;
-    }
-
-    @Override
-    public int getCenterY() {
-        return (getY1() + getY2()) / 2;
-    }
+    public Port getStartPort() { return startPort; }
+    public Port getEndPort()   { return endPort; }
 }
