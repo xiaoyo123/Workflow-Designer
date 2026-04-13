@@ -20,6 +20,6 @@ public class CreateMode implements Mode {
 
     @Override
     public void mouseReleased(int x, int y) {
-        controller.createElement(type, x, y);
+        controller.createObject(type, x, y);
     }
 }

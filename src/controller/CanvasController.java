@@ -25,7 +25,7 @@ public class CanvasController {
 
     // ── Use Case A ──
 
-    public void createElement(ObjectType type, int x, int y) {
+    public void createObject(ObjectType type, int x, int y) {
         int depth = getNextDepth();
         Element e = switch (type) {
             case RECT -> new Rect(x, y, depth);
