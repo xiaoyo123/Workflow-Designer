@@ -4,23 +4,26 @@ import controller.CanvasController;
 import element.Element;
 import element.Port;
 import element.object.BasicObject;
-import element.object.isBasicObject;
+import java.awt.Rectangle;
+import java.util.EnumSet;
 
 public class SelectMode implements Mode {
-    private static final int MIN_SIZE = 20;
+    private static final int EDGE_TOLERANCE = 10;
+
     private final CanvasController controller;
 
     private enum DragState { IDLE, MOVING, AREA_SELECT, RESIZING }
+
+    private enum ResizeEdge { LEFT, RIGHT, TOP, BOTTOM }
+
     private DragState dragState = DragState.IDLE;
-
     private int startX, startY;
-    private int lastX,  lastY;
+    private int lastX, lastY;
 
-    // resize 用
     private Element draggingElement;
-    private Port    draggingPort;
-    private int resizeRefX1, resizeRefY1, resizeRefX2, resizeRefY2;
-    private boolean resizeLeft, resizeRight, resizeTop, resizeBottom;
+    private BasicObject resizingObject;
+    private EnumSet<ResizeEdge> resizeEdges = EnumSet.noneOf(ResizeEdge.class);
+    private Rectangle resizeStartBounds;
 
     public SelectMode(CanvasController controller) {
         this.controller = controller;
@@ -28,39 +31,25 @@ public class SelectMode implements Mode {
 
     @Override
     public void mousePressed(int x, int y) {
-        startX = x; startY = y;
-        lastX  = x; lastY  = y;
+        startX = x;
+        startY = y;
+        lastX = x;
+        lastY = y;
 
         Element target = controller.getTopElementAt(x, y).orElse(null);
 
-        // 已選取的 BasicObject，點到 port → resize
-        if (target instanceof isBasicObject obj
-                && target.isSelected()
-                && controller.getSelectedElements().size() == 1) {
-            Port port = obj.getPortAt(x, y);
-            if (port != null) {
-                captureResizeRef((BasicObject) target);
-                captureResizeEdges(port);
-                if (hasResizeEdge()) {
-                    draggingPort    = port;
-                    draggingElement = target;
-                    dragState       = DragState.RESIZING;
-                    return;
-                }
-            }
+        if (tryStartResize(target, x, y)) {
+            return;
         }
 
         if (target != null) {
-            // 點到物件本體 → 移動
             if (!controller.getSelectedElements().contains(target)) {
                 controller.selectAt(x, y);
             }
             draggingElement = target;
-            dragState       = DragState.MOVING;
+            dragState = DragState.MOVING;
         } else {
-            // 點到空白 → 框選
             controller.clearSelection();
-            controller.setPreviewRect(x, y, x, y);
             dragState = DragState.AREA_SELECT;
         }
     }
@@ -69,13 +58,12 @@ public class SelectMode implements Mode {
     public void mouseDragged(int x, int y) {
         switch (dragState) {
             case MOVING -> {
-                int dx = x - lastX, dy = y - lastY;
+                int dx = x - lastX;
+                int dy = y - lastY;
                 controller.moveSelected(dx, dy);
             }
-            case AREA_SELECT ->
-                controller.setPreviewRect(startX, startY, x, y);
-            case RESIZING ->
-                resizeFromPort(x, y);
+            case AREA_SELECT -> {}
+            case RESIZING -> resizeFromHandle(x, y);
             case IDLE -> {}
         }
         lastX = x;
@@ -85,69 +73,96 @@ public class SelectMode implements Mode {
     @Override
     public void mouseReleased(int x, int y) {
         switch (dragState) {
-            case AREA_SELECT -> {
-                controller.clearPreviewRect();
-                controller.areaSelect(startX, startY, x, y);
-            }
-            case MOVING ->
-                controller.bringToFront(draggingElement);
+            case AREA_SELECT -> controller.areaSelect(startX, startY, x, y);
+            case MOVING -> controller.bringToFront(draggingElement);
             case RESIZING, IDLE -> {}
         }
-        dragState       = DragState.IDLE;
+
+        dragState = DragState.IDLE;
         draggingElement = null;
-        draggingPort    = null;
-        clearResizeRef();
+        resizingObject = null;
+        resizeEdges.clear();
+        resizeStartBounds = null;
     }
 
-    // ── resize 輔助 ──
+    private boolean tryStartResize(Element target, int x, int y) {
+        if (!(target instanceof BasicObject obj)
+                || !target.isSelected()
+                || controller.getSelectedElements().size() != 1) {
+            return false;
+        }
 
-    private void resizeFromPort(int mx, int my) {
-        if (!(draggingElement instanceof isBasicObject obj)) return;
+        Port port = obj.getPortAt(x, y);
+        if (port == null) {
+            return false;
+        }
 
-        int x1 = resizeRefX1, y1 = resizeRefY1;
-        int x2 = resizeRefX2, y2 = resizeRefY2;
+        EnumSet<ResizeEdge> edges = detectResizeEdges(obj, port);
+        if (edges.isEmpty()) {
+            return false;
+        }
 
-        if (resizeLeft)   x1 = mx;
-        if (resizeRight)  x2 = mx;
-        if (resizeTop)    y1 = my;
+        resizingObject = obj;
+        resizeEdges = edges;
+        resizeStartBounds = new Rectangle(obj.getX(), obj.getY(), obj.getWidth(), obj.getHeight());
+        dragState = DragState.RESIZING;
+        return true;
+    }
+
+    private EnumSet<ResizeEdge> detectResizeEdges(BasicObject obj, Port port) {
+        int x1 = obj.getX();
+        int y1 = obj.getY();
+        int x2 = obj.getX() + obj.getWidth();
+        int y2 = obj.getY() + obj.getHeight();
+
+        EnumSet<ResizeEdge> edges = EnumSet.noneOf(ResizeEdge.class);
+        if (Math.abs(port.getX() - x1) <= EDGE_TOLERANCE) edges.add(ResizeEdge.LEFT);
+        if (Math.abs(port.getX() - x2) <= EDGE_TOLERANCE) edges.add(ResizeEdge.RIGHT);
+        if (Math.abs(port.getY() - y1) <= EDGE_TOLERANCE) edges.add(ResizeEdge.TOP);
+        if (Math.abs(port.getY() - y2) <= EDGE_TOLERANCE) edges.add(ResizeEdge.BOTTOM);
+
+        return edges;
+    }
+
+    private void resizeFromHandle(int mx, int my) {
+        if (resizingObject == null || resizeEdges.isEmpty() || resizeStartBounds == null) {
+            return;
+        }
+
+        int x1 = resizeStartBounds.x;
+        int y1 = resizeStartBounds.y;
+        int x2 = resizeStartBounds.x + resizeStartBounds.width;
+        int y2 = resizeStartBounds.y + resizeStartBounds.height;
+
+        boolean resizeLeft = resizeEdges.contains(ResizeEdge.LEFT);
+        boolean resizeRight = resizeEdges.contains(ResizeEdge.RIGHT);
+        boolean resizeTop = resizeEdges.contains(ResizeEdge.TOP);
+        boolean resizeBottom = resizeEdges.contains(ResizeEdge.BOTTOM);
+
+        if (resizeLeft) x1 = mx;
+        if (resizeRight) x2 = mx;
+        if (resizeTop) y1 = my;
         if (resizeBottom) y2 = my;
 
-        // 最小尺寸限制
-        if (Math.abs(x2 - x1) < MIN_SIZE) {
-            if (resizeLeft && !resizeRight) x1 = x2 - Integer.signum(x2-x1) * MIN_SIZE;
-            else                            x2 = x1 + Integer.signum(x2-x1) * MIN_SIZE;
+        if (Math.abs(x2 - x1) < BasicObject.MIN_SIZE) {
+            int sign = x2 >= x1 ? 1 : -1;
+            if (resizeLeft && !resizeRight) {
+                x1 = x2 - sign * BasicObject.MIN_SIZE;
+            } else {
+                x2 = x1 + sign * BasicObject.MIN_SIZE;
+            }
         }
-        if (Math.abs(y2 - y1) < MIN_SIZE) {
-            if (resizeTop && !resizeBottom) y1 = y2 - Integer.signum(y2-y1) * MIN_SIZE;
-            else                            y2 = y1 + Integer.signum(y2-y1) * MIN_SIZE;
+        if (Math.abs(y2 - y1) < BasicObject.MIN_SIZE) {
+            int sign = y2 >= y1 ? 1 : -1;
+            if (resizeTop && !resizeBottom) {
+                y1 = y2 - sign * BasicObject.MIN_SIZE;
+            } else {
+                y2 = y1 + sign * BasicObject.MIN_SIZE;
+            }
         }
 
-        obj.setBounds(x1, y1, x2, y2);
+        resizingObject.setBounds(x1, y1, x2, y2);
         if (canvas() != null) canvas().repaint();
-    }
-
-    private void captureResizeRef(BasicObject obj) {
-        resizeRefX1 = obj.getX();
-        resizeRefY1 = obj.getY();
-        resizeRefX2 = obj.getX() + obj.getWidth();
-        resizeRefY2 = obj.getY() + obj.getHeight();
-    }
-
-    private void captureResizeEdges(Port port) {
-        final int tol = 10;
-        resizeLeft   = Math.abs(port.getX() - resizeRefX1) <= tol;
-        resizeRight  = Math.abs(port.getX() - resizeRefX2) <= tol;
-        resizeTop    = Math.abs(port.getY() - resizeRefY1) <= tol;
-        resizeBottom = Math.abs(port.getY() - resizeRefY2) <= tol;
-    }
-
-    private boolean hasResizeEdge() {
-        return resizeLeft || resizeRight || resizeTop || resizeBottom;
-    }
-
-    private void clearResizeRef() {
-        resizeRefX1 = resizeRefY1 = resizeRefX2 = resizeRefY2 = 0;
-        resizeLeft = resizeRight = resizeTop = resizeBottom = false;
     }
 
     private ui.Canvas canvas() {

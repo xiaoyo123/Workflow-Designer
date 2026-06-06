@@ -37,6 +37,10 @@ public abstract class Element {
     public boolean isHovered()                 { return isHovered; }
     public int getX()                          { return x; }
     public int getY()                          { return y; }
+    public int getWidth()                      { return 0; }
+    public int getHeight()                     { return 0; }
+    public int getRight()                      { return x + getWidth(); }
+    public int getBottom()                     { return y + getHeight(); }
     public int getDepth()                      { return depth; }
     public void setDepth(int depth)            { this.depth = depth; }
 }

@@ -24,7 +24,6 @@ public class Sidebar extends JPanel {
     public interface Listener {
         void onModeSelected(String modeName);
         void onShapePressed(String shapeType);
-        void onShapeReleased(String shapeType);
     }
 
     private static final int TOOL_ICON_SIZE = 28;
@@ -91,13 +90,6 @@ public class Sidebar extends JPanel {
             public void mousePressed(MouseEvent e) {
                 if (SwingUtilities.isLeftMouseButton(e)) {
                     listener.onShapePressed(shapeType);
-                }
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (SwingUtilities.isLeftMouseButton(e)) {
-                    listener.onShapeReleased(shapeType);
                 }
             }
         });

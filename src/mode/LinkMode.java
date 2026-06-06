@@ -17,23 +17,13 @@ public class LinkMode implements Mode {
     @Override
     public void mousePressed(int x, int y) {
         startPort = controller.getPortAt(x, y);
-        if (startPort != null) {
-            controller.setPreviewLink(
-                startPort.getX(), startPort.getY(), x, y);
-        }
     }
 
     @Override
-    public void mouseDragged(int x, int y) {
-        if (startPort != null) {
-            controller.setPreviewLink(
-                startPort.getX(), startPort.getY(), x, y);
-        }
-    }
+    public void mouseDragged(int x, int y) {}
 
     @Override
     public void mouseReleased(int x, int y) {
-        controller.clearPreviewLink();
         if (startPort == null) return;
         Port endPort = controller.getPortAt(x, y);
         controller.createLink(startPort, endPort, type);

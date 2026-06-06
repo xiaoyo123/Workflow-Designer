@@ -10,13 +10,13 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import element.object.isBasicObject;
+import element.object.BasicObject;
 
-public final class AppearanceEditorDialog {
-    private AppearanceEditorDialog() {
+public final class StyleDialog {
+    private StyleDialog() {
     }
 
-    public static boolean show(Component parent, isBasicObject editable) {
+    public static boolean show(Component parent, BasicObject editable) {
         JTextField labelField = new JTextField(editable.getLabelName(), 16);
         ColorOption[] options = new ColorOption[] {
             new ColorOption("Light Gray", new Color(240, 240, 240)),

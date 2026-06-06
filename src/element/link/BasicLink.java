@@ -4,7 +4,7 @@ import element.Element;
 import element.Port;
 import java.awt.*;
 
-public abstract class BasicLink extends Element {
+public class BasicLink extends Element {
     private final Port     startPort;
     private final Port     endPort;
     private final LinkType type;
@@ -46,7 +46,4 @@ public abstract class BasicLink extends Element {
 
     @Override
     public boolean isSelectable() { return false; }
-
-    public Port getStartPort() { return startPort; }
-    public Port getEndPort()   { return endPort; }
 }

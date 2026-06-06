@@ -8,11 +8,9 @@ import element.link.BasicLink;
 import element.object.BasicObject;
 import element.object.ObjectType;
 import element.object.Rect;
-import element.object.isBasicObject;
 import element.object.Oval;
 import ui.Canvas;
 
-import java.awt.Color;
 import java.util.*;
 
 public class CanvasController {
@@ -41,15 +39,16 @@ public class CanvasController {
         if (startPort == null || endPort == null) return;
         if (startPort.getOwner() == endPort.getOwner()) return;
         int depth = getFrontDepth() - 1;
-        BasicLink link = new BasicLink(startPort, endPort, type, depth) {};
+        BasicLink link = new BasicLink(startPort, endPort, type, depth);
         elements.add(link);
         repaint();
     }
 
     public Port getPortAt(int x, int y) {
         return elements.stream()
-            .filter(e -> e instanceof isBasicObject)
-            .map(e -> (isBasicObject) e)
+            .filter(e -> e instanceof BasicObject)
+            .sorted(Comparator.comparingInt(Element::getDepth))
+            .map(e -> (BasicObject) e)
             .map(c -> c.getPortAt(x, y))
             .filter(Objects::nonNull)
             .findFirst()
@@ -124,13 +123,6 @@ public class CanvasController {
 
     // ── Use Case G ──
 
-    public void updateLabel(Element element, String name, Color color) {
-        if (!(element instanceof isBasicObject e)) return;
-        e.setLabelName(name);
-        e.setFillColor(color);
-        repaint();
-    }
-
     // ── 工具方法 ──
 
     public Optional<Element> getTopElementAt(int x, int y) {
@@ -155,21 +147,6 @@ public class CanvasController {
     }
 
     private void repaint() { if (canvas != null) canvas.repaint(); }
-
-    // ── 預覽方法 ──
-
-    public void setPreviewRect(int x1, int y1, int x2, int y2) {
-        if (canvas != null) canvas.setPreviewRect(x1, y1, x2, y2);
-    }
-    public void clearPreviewRect() {
-        if (canvas != null) canvas.clearPreviewRect();
-    }
-    public void setPreviewLink(int x1, int y1, int x2, int y2) {
-        if (canvas != null) canvas.setPreviewLink(x1, y1, x2, y2);
-    }
-    public void clearPreviewLink() {
-        if (canvas != null) canvas.clearPreviewLink();
-    }
 
     public List<Element> getElements() {
         return Collections.unmodifiableList(elements);

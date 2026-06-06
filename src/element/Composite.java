@@ -4,8 +4,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import element.object.BasicObject;
-
 public class Composite extends Element{
     private final List<Element> members;
 
@@ -34,21 +32,13 @@ public class Composite extends Element{
 
     private static int calcRight(List<Element> els) {
         return els.stream()
-            .mapToInt(e -> {
-                if (e instanceof BasicObject o) return o.getX() + o.getWidth();
-                if (e instanceof Composite   c) return c.getX() + c.getWidth();
-                return e.getX();
-            })
+            .mapToInt(Element::getRight)
             .max().orElse(0);
     }
 
     private static int calcBottom(List<Element> els) {
         return els.stream()
-            .mapToInt(e -> {
-                if (e instanceof BasicObject o) return o.getY() + o.getHeight();
-                if (e instanceof Composite   c) return c.getY() + c.getHeight();
-                return e.getY();
-            })
+            .mapToInt(Element::getBottom)
             .max().orElse(0);
     }
 

@@ -4,16 +4,26 @@ import javax.swing.*;
 import controller.CanvasController;
 import element.Element;
 import element.link.LinkType;
+import element.object.BasicObject;
 import element.object.ObjectType;
-import element.object.isBasicObject;
 import mode.*;
 import java.awt.*;
 import java.util.List;
 
 public class Window extends JFrame {
-    private static final String[] TOOL_NAMES = {
-        "Select", "Association", "Generalization",
-        "Composition", "Rect", "Oval"
+    private record ToolDefinition(String name, LinkType linkType, ObjectType objectType) {
+        boolean isShape() {
+            return objectType != null;
+        }
+    }
+
+    private static final ToolDefinition[] TOOLS = {
+        new ToolDefinition("Select", null, null),
+        new ToolDefinition("Association", LinkType.ASSOCIATION, null),
+        new ToolDefinition("Generalization", LinkType.GENERALIZATION, null),
+        new ToolDefinition("Composition", LinkType.COMPOSITION, null),
+        new ToolDefinition("Rect", null, ObjectType.RECT),
+        new ToolDefinition("Oval", null, ObjectType.OVAL)
     };
 
     private final CanvasController controller;
@@ -31,22 +41,19 @@ public class Window extends JFrame {
         setSize(1000, 800);
         setLayout(new BorderLayout());
 
-        sidebar = new Sidebar(TOOL_NAMES, 
-            java.util.Set.of("Rect", "Oval"),
+        sidebar = new Sidebar(toolNames(), 
+            shapeToolNames(),
             new Sidebar.Listener() {
                 @Override
                 public void onModeSelected(String name) { switchMode(name); }
                 @Override
                 public void onShapePressed(String name) { 
-                    ObjectType type = name.equals("Rect") ? ObjectType.RECT :
-                                      name.equals("Oval") ? ObjectType.OVAL : null;
+                    ObjectType type = toolByName(name).objectType();
                     sidebar.updateButtonHighlight(name);
                     canvas.beginExternalCreate(type, () -> {
                         sidebar.updateButtonHighlight(activeModeName);
                     });
                 }
-                @Override
-                public void onShapeReleased(String name) {}
             });
 
         add(sidebar, BorderLayout.WEST);
@@ -65,17 +72,41 @@ public class Window extends JFrame {
     }
 
     private void switchMode(String name) {
+        ToolDefinition tool = toolByName(name);
 
-        Mode mode = switch (name) {
-            case "Select"         -> new SelectMode(controller);
-            case "Association"    -> new LinkMode(controller, LinkType.ASSOCIATION);
-            case "Generalization" -> new LinkMode(controller, LinkType.GENERALIZATION);
-            case "Composition"    -> new LinkMode(controller, LinkType.COMPOSITION);
-            default               -> new SelectMode(controller);
-        };
+        Mode mode = tool.linkType() != null
+            ? new LinkMode(controller, tool.linkType())
+            : new SelectMode(controller);
         canvas.setMode(mode);
         activeModeName = name;
         sidebar.updateButtonHighlight(name);
+    }
+
+    private static String[] toolNames() {
+        String[] names = new String[TOOLS.length];
+        for (int i = 0; i < TOOLS.length; i++) {
+            names[i] = TOOLS[i].name();
+        }
+        return names;
+    }
+
+    private static java.util.Set<String> shapeToolNames() {
+        java.util.Set<String> names = new java.util.LinkedHashSet<>();
+        for (ToolDefinition tool : TOOLS) {
+            if (tool.isShape()) {
+                names.add(tool.name());
+            }
+        }
+        return names;
+    }
+
+    private static ToolDefinition toolByName(String name) {
+        for (ToolDefinition tool : TOOLS) {
+            if (tool.name().equals(name)) {
+                return tool;
+            }
+        }
+        return TOOLS[0];
     }
 
     private void setLabelForSelection() {
@@ -87,13 +118,13 @@ public class Window extends JFrame {
             return;
         }
         Element target = selected.get(0);
-        if (!(target instanceof isBasicObject element)) {
+        if (!(target instanceof BasicObject element)) {
             JOptionPane.showMessageDialog(this,
                 "Only a basic object can be assigned label.",
                 "Label", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        if (AppearanceEditorDialog.show(this, element)) {
+        if (StyleDialog.show(this, element)) {
             canvas.repaint();
         }
     }

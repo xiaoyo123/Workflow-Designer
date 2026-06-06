@@ -4,15 +4,14 @@ import element.*;
 import java.awt.*;
 import java.util.List;
 
-public abstract class BasicObject extends Element
-        implements isBasicObject {
+public abstract class BasicObject extends Element {
 
     protected int width, height;
     protected String labelName = "";
     protected Color  fillColor = new Color(240, 240, 240);
     protected List<Port> ports;
 
-    private static final int MIN_SIZE = 20;
+    public static final int MIN_SIZE = 20;
 
     public BasicObject(int x1, int y1, int x2, int y2, int depth) {
         super(Math.min(x1, x2), Math.min(y1, y2), depth);
@@ -26,7 +25,6 @@ public abstract class BasicObject extends Element
 
     // ── click port to handle connect and resize ──
 
-    @Override
     public Port getPortAt(int mx, int my) {
         return ports.stream()
             .filter(p -> p.isInRange(mx, my))
@@ -36,7 +34,6 @@ public abstract class BasicObject extends Element
 
     // ── Resizable ──
 
-    @Override
     public void setBounds(int x1, int y1, int x2, int y2) {
         this.x      = Math.min(x1, x2);
         this.y      = Math.min(y1, y2);
@@ -71,13 +68,9 @@ public abstract class BasicObject extends Element
 
     // ── Labelable ──
 
-    @Override
     public String getLabelName()             { return labelName; }
-    @Override
     public void setLabelName(String name)    { this.labelName = name != null ? name : ""; }
-    @Override
     public Color getFillColor()              { return fillColor; }
-    @Override
     public void setFillColor(Color color)    { this.fillColor = color != null ? color : this.fillColor; }
 
 
@@ -106,10 +99,10 @@ public abstract class BasicObject extends Element
 
 
     // getters
+    @Override
     public int getWidth()  { return width; }
+    @Override
     public int getHeight() { return height; }
-    public int getRight()  { return x + width; }
-    public int getBottom() { return y + height; }
     public int getCenterX(){ return x + width  / 2; }
     public int getCenterY(){ return y + height / 2; }
 }
