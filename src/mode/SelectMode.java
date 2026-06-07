@@ -110,16 +110,12 @@ public class SelectMode implements Mode {
     }
 
     private EnumSet<ResizeEdge> detectResizeEdges(BasicObject obj, Port port) {
-        int x1 = obj.getX();
-        int y1 = obj.getY();
-        int x2 = obj.getX() + obj.getWidth();
-        int y2 = obj.getY() + obj.getHeight();
 
         EnumSet<ResizeEdge> edges = EnumSet.noneOf(ResizeEdge.class);
-        if (Math.abs(port.getX() - x1) <= EDGE_TOLERANCE) edges.add(ResizeEdge.LEFT);
-        if (Math.abs(port.getX() - x2) <= EDGE_TOLERANCE) edges.add(ResizeEdge.RIGHT);
-        if (Math.abs(port.getY() - y1) <= EDGE_TOLERANCE) edges.add(ResizeEdge.TOP);
-        if (Math.abs(port.getY() - y2) <= EDGE_TOLERANCE) edges.add(ResizeEdge.BOTTOM);
+        if (port.getOffsetX() == 0) edges.add(ResizeEdge.LEFT);
+        if (port.getOffsetX() == obj.getWidth()) edges.add(ResizeEdge.RIGHT);
+        if (port.getOffsetY() == 0) edges.add(ResizeEdge.TOP);
+        if (port.getOffsetY() == obj.getHeight()) edges.add(ResizeEdge.BOTTOM);
 
         return edges;
     }
